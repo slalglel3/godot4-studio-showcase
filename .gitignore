@@ -1,0 +1,5 @@
+# Godot runtime cache & temporary files
+godot_project/.godot/
+*.avi
+.DS_Store
+__pycache__/

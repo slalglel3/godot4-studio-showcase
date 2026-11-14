@@ -1,0 +1,867 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Godot 4 Game Studio — Environment &amp; VFX Verification Showcase</title>
+  <style>
+    :root {
+      --bg: #0a0c12;
+      --bg-elev: #111622;
+      --bg-card: #161d2e;
+      --bg-code: #0d111a;
+      --border: #25304a;
+      --text: #e8eef8;
+      --muted: #93a3c0;
+      --cyan: #3ee0ff;
+      --gold: #ffca57;
+      --crimson: #ff4d6d;
+      --green: #38e59d;
+      --violet: #b37cff;
+      --radius: 14px;
+      --shadow: 0 18px 48px rgba(0, 0, 0, 0.45);
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans KR", Roboto, sans-serif;
+      background:
+        radial-gradient(1200px 600px at 15% -10%, rgba(62, 224, 255, 0.10), transparent 60%),
+        radial-gradient(900px 500px at 88% 5%, rgba(255, 77, 109, 0.10), transparent 55%),
+        var(--bg);
+      color: var(--text);
+      line-height: 1.58;
+    }
+
+    a { color: var(--cyan); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    .container {
+      max-width: 1240px;
+      margin: 0 auto;
+      padding: 28px 20px 72px;
+    }
+
+    /* Header */
+    .hero {
+      background: linear-gradient(145deg, rgba(22, 29, 46, 0.96), rgba(13, 17, 27, 0.96));
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 28px;
+      box-shadow: var(--shadow);
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::after {
+      content: "";
+      position: absolute;
+      inset: 0 0 auto 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--cyan), var(--gold), var(--crimson), var(--violet));
+    }
+    .hero-top {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 16px;
+    }
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--cyan);
+      margin-bottom: 8px;
+    }
+    h1 {
+      margin: 0 0 8px;
+      font-size: clamp(24px, 3.2vw, 34px);
+      line-height: 1.2;
+      letter-spacing: -0.02em;
+    }
+    .subtitle {
+      margin: 0;
+      color: var(--muted);
+      font-size: 15px;
+      max-width: 780px;
+    }
+
+    .badge-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 18px;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      font-size: 12.5px;
+      font-weight: 600;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border);
+      color: var(--text);
+    }
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--green);
+      box-shadow: 0 0 8px var(--green);
+    }
+    .dot.cyan { background: var(--cyan); box-shadow: 0 0 8px var(--cyan); }
+    .dot.gold { background: var(--gold); box-shadow: 0 0 8px var(--gold); }
+
+    .nav-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 20px;
+      padding-top: 16px;
+      border-top: 1px solid rgba(255,255,255,0.06);
+    }
+    .nav-pills a {
+      padding: 7px 13px;
+      border-radius: 9px;
+      background: rgba(62, 224, 255, 0.08);
+      border: 1px solid rgba(62, 224, 255, 0.22);
+      color: var(--text);
+      font-size: 13px;
+      font-weight: 600;
+      transition: background 0.15s, border-color 0.15s;
+    }
+    .nav-pills a:hover {
+      text-decoration: none;
+      background: rgba(62, 224, 255, 0.16);
+      border-color: var(--cyan);
+    }
+
+    /* Section */
+    section { margin-top: 32px; }
+    .section-head {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+    .section-head h2 {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: -0.01em;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .section-desc {
+      margin: 0;
+      color: var(--muted);
+      font-size: 13.5px;
+    }
+
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 18px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.28);
+    }
+
+    /* KPI Grid */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 14px;
+    }
+    .kpi {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px 18px;
+    }
+    .kpi-label {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+    .kpi-value {
+      font-size: 22px;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 4px;
+    }
+    .kpi-sub {
+      font-size: 12.5px;
+      color: var(--muted);
+    }
+    .kpi-value.ok { color: var(--green); }
+    .kpi-value.cyan { color: var(--cyan); }
+    .kpi-value.gold { color: var(--gold); }
+
+    /* Media Grid */
+    .media-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+    }
+    @media (max-width: 920px) {
+      .media-grid { grid-template-columns: 1fr; }
+    }
+
+    .stage-wrap {
+      position: relative;
+      background: #05070b;
+      border-radius: 10px;
+      overflow: hidden;
+      border: 1px solid #2b354f;
+      aspect-ratio: 16 / 9;
+    }
+    .stage-wrap video,
+    .stage-wrap img {
+      width: 100%;
+      height: 100%;
+      display: block;
+      object-fit: contain;
+    }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-top: 12px;
+    }
+    .btn-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    button.btn {
+      appearance: none;
+      border: 1px solid var(--border);
+      background: var(--bg-elev);
+      color: var(--text);
+      padding: 6px 11px;
+      border-radius: 8px;
+      font-size: 12.5px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.14s ease;
+    }
+    button.btn:hover {
+      border-color: var(--cyan);
+      background: rgba(62, 224, 255, 0.12);
+    }
+    button.btn.active {
+      border-color: var(--cyan);
+      background: rgba(62, 224, 255, 0.22);
+      color: #fff;
+    }
+
+    .scrubber-box {
+      margin-top: 12px;
+      padding: 12px;
+      background: var(--bg-elev);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+    }
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--cyan);
+      cursor: pointer;
+    }
+    .frame-caption {
+      margin-top: 8px;
+      font-size: 13px;
+      color: var(--text);
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .frame-tag {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      color: var(--gold);
+      font-weight: 700;
+    }
+    .jump-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 10px;
+    }
+
+    /* Contact sheet */
+    .contact-sheet-img {
+      width: 100%;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      cursor: zoom-in;
+      display: block;
+      transition: transform 0.18s ease;
+    }
+    .contact-sheet-img:hover { transform: scale(1.005); }
+
+    /* Textures */
+    .tex-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 14px;
+    }
+    .tex-card {
+      background: var(--bg-elev);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .tex-preview {
+      height: 150px;
+      border-radius: 8px;
+      border: 1px solid rgba(255,255,255,0.08);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 10px;
+      background: #0d0a10;
+      overflow: hidden;
+    }
+    .tex-preview.checker {
+      background-color: #1f2430;
+      background-image:
+        linear-gradient(45deg, #2b3242 25%, transparent 25%),
+        linear-gradient(-45deg, #2b3242 25%, transparent 25%),
+        linear-gradient(45deg, transparent 75%, #2b3242 75%),
+        linear-gradient(-45deg, transparent 75%, #2b3242 75%);
+      background-size: 20px 20px;
+      background-position: 0 0, 0 10px, 10px -10px, -10px 0;
+    }
+    .tex-preview img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+    }
+    .tex-name {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--cyan);
+    }
+    .tex-meta {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    /* Verification & tables */
+    .table-wrap { overflow-x: auto; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13.5px;
+    }
+    th, td {
+      text-align: left;
+      padding: 10px 12px;
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+      vertical-align: top;
+    }
+    th {
+      color: var(--muted);
+      font-weight: 600;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    code, pre {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+    }
+    code.inline {
+      background: rgba(255,255,255,0.06);
+      padding: 2px 6px;
+      border-radius: 5px;
+      font-size: 12.5px;
+      color: var(--cyan);
+    }
+
+    /* JSON / Code Inspector */
+    .tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 12px;
+    }
+    .code-shell {
+      background: var(--bg-code);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    .code-bar {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      background: rgba(255,255,255,0.03);
+      border-bottom: 1px solid var(--border);
+      font-size: 12.5px;
+    }
+    pre.code-view {
+      margin: 0;
+      padding: 16px;
+      max-height: 460px;
+      overflow: auto;
+      font-size: 12.5px;
+      line-height: 1.52;
+      color: #d7e2f4;
+      white-space: pre;
+    }
+
+    details.json-box {
+      margin-top: 12px;
+      background: var(--bg-elev);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 14px;
+    }
+    details.json-box summary {
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 13.5px;
+      color: var(--text);
+    }
+    details.json-box pre {
+      margin: 12px 0 0;
+      max-height: 320px;
+      overflow: auto;
+      background: var(--bg-code);
+      padding: 12px;
+      border-radius: 8px;
+      font-size: 12px;
+      color: #c8d6ee;
+    }
+
+    /* Lightbox */
+    .lightbox {
+      position: fixed;
+      inset: 0;
+      background: rgba(5, 7, 12, 0.92);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      z-index: 999;
+      cursor: zoom-out;
+    }
+    .lightbox.open { display: flex; }
+    .lightbox img {
+      max-width: 96vw;
+      max-height: 92vh;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      box-shadow: 0 24px 64px rgba(0,0,0,0.8);
+    }
+
+    footer {
+      margin-top: 42px;
+      padding-top: 18px;
+      border-top: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 13px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      gap: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header class="hero">
+      <div class="hero-top">
+        <div>
+          <div class="eyebrow">Godot 4 Game Studio · Closed-Loop Verification Showcase</div>
+          <h1>Godot 4.7.2 + MCP VFX Pipeline Verification</h1>
+          <p class="subtitle">
+            전역 스킬 <code class="inline">godot4-game-studio</code>로 신규 프로젝트(<code class="inline">Godot4StudioShowcase</code>)를 스캐폴딩한 뒤,
+            <code class="inline">godot-mcp</code>(157개 도구) 정적 검증과 <code class="inline">godot-xvfb-run</code> Vulkan Forward+ MovieMaker 렌더링(60프레임 @ 30fps)을 End-to-End로 실제 실행·검증한 결과 페이지입니다.
+          </p>
+        </div>
+      </div>
+
+      <div class="badge-row" id="heroBadges"></div>
+
+      <nav class="nav-pills">
+        <a href="#sec-render">1. 실시간 렌더 &amp; 프레임 스크러버</a>
+        <a href="#sec-sheet">2. 6-Frame 컨택트 시트</a>
+        <a href="#sec-mcp">3. MCP &amp; WSL2 엔지니어링 리포트</a>
+        <a href="#sec-textures">4. 절차적 VFX 텍스처 아틀라스 (8종)</a>
+        <a href="#sec-code">5. 셰이더 &amp; GDScript 소스 인스펙터</a>
+      </nav>
+    </header>
+
+    <section aria-label="핵심 검증 지표">
+      <div class="kpi-grid" id="kpiGrid"></div>
+    </section>
+
+    <section id="sec-render">
+      <div class="section-head">
+        <h2>1. MovieMaker 렌더 영상 &amp; 프레임별 타임라인 검증</h2>
+        <p class="section-desc">2.00초(60프레임 @ 30fps, 1280×720, Vulkan 1.4.335 llvmpipe Forward+) 실시간 녹화 결과</p>
+      </div>
+
+      <div class="media-grid">
+        <div class="card">
+          <div class="stage-wrap">
+            <video id="demoVideo" src="assets/demo.mp4" autoplay loop muted playsinline controls></video>
+          </div>
+          <div class="toolbar">
+            <div class="btn-group">
+              <button class="btn" id="btnPlayToggle" type="button">일시정지 / 재생</button>
+              <button class="btn speed-btn" data-speed="0.25" type="button">0.25x 슬로우</button>
+              <button class="btn speed-btn" data-speed="0.5" type="button">0.5x</button>
+              <button class="btn speed-btn active" data-speed="1" type="button">1.0x</button>
+            </div>
+            <span class="tex-meta" id="videoTimeLabel">0.00s / 2.00s</span>
+          </div>
+          <p class="tex-meta" style="margin: 10px 0 0;">
+            ※ <strong>핵심 확인 포인트</strong>: 0.20s·0.35s 연속 컷인 발동 시 좌/우 슬롯 겹침 없음, 0.72s 충격파가 <code class="inline">ShockwaveLayer(layer 1)</code>에서만 왜곡되어 상단 보스 게이지(<code class="inline">HudLayer(layer 10)</code>) 및 컷인 텍스트가 찌그러지지 않음.
+          </p>
+        </div>
+
+        <div class="card">
+          <div class="stage-wrap">
+            <img id="framePreview" src="assets/frames/f_0024.png" alt="Selected Godot keyframe" style="cursor: zoom-in;" />
+          </div>
+          <div class="scrubber-box">
+            <input id="frameSlider" type="range" min="0" max="12" value="5" />
+            <div class="frame-caption">
+              <span class="frame-tag" id="frameTag">f024 · 0.77s</span>
+              <span id="frameText">로딩 중...</span>
+            </div>
+            <div class="jump-pills" id="jumpPills"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="sec-sheet">
+      <div class="section-head">
+        <h2>2. 자동 생성 6-Frame 검증 컨택트 시트</h2>
+        <p class="section-desc"><code class="inline">render_verify.sh</code>가 프레임 캡처 직후 생성한 시각 QA 시트 (클릭 시 원본 확대)</p>
+      </div>
+      <div class="card">
+        <img id="contactSheetImg" class="contact-sheet-img" src="assets/contact_sheet.jpg" alt="6-frame verification contact sheet" />
+      </div>
+    </section>
+
+    <section id="sec-mcp">
+      <div class="section-head">
+        <h2>3. MCP 정적/씬 검증 &amp; WSL2 격리 Xvfb 파이프라인 결과</h2>
+        <p class="section-desc">실제 <code class="inline">godot</code> MCP 서버 호출 결과 및 구축 과정에서 발견·해결한 WSL2 이슈 요약</p>
+      </div>
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>검증 계층</th>
+                <th>실행 도구 / 명령</th>
+                <th>관측 결과</th>
+                <th>핵심 해결 내역 (테스트 중 발견)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>1. 프로젝트 스캐폴딩 &amp; 리소스 임포트</strong></td>
+                <td><code class="inline">scaffold_godot_project.sh</code></td>
+                <td><span style="color:var(--green);font-weight:700;">PASS</span> · 8 textures / 5 shaders / 4 scripts / 1 scene</td>
+                <td>초기 빈 프로젝트에서 <code class="inline">.godot/imported/</code> 미생성으로 인한 <code class="inline">No loader found for .png</code> 및 전역 클래스 미인식을 발견 → <code class="inline">--headless --import --quit</code> 자동화 패치 적용 후 재검증 완료</td>
+              </tr>
+              <tr>
+                <td><strong>2. Godot MCP 정적/타입 검사</strong></td>
+                <td><code class="inline">godot:validate_scripts (scope="all")</code></td>
+                <td><span style="color:var(--green);font-weight:700;">PASS</span> · 4/4 files (<code class="inline">filesWithErrors: 0</code>)</td>
+                <td>WSL2 <code class="inline">DISPLAY=:0</code> 소켓 대기 행(30s hang)을 <code class="inline">mcp_config.json</code>에서 <code class="inline">DISPLAY</code> 제거로 원천 차단하여 <code class="inline">&lt;1s</code> 응답 달성</td>
+              </tr>
+              <tr>
+                <td><strong>3. 씬 트리 &amp; 메타데이터 파싱</strong></td>
+                <td><code class="inline">godot:read_scene</code> · <code class="inline">godot:get_project_info</code></td>
+                <td><span style="color:var(--green);font-weight:700;">PASS</span> · <code class="inline">VfxShowcase</code> (Forward+, 4.7.2.stable)</td>
+                <td><code class="inline">WorldEnvironment(HDR Glow 0.95)</code> + <code class="inline">ShockwaveLayer(1)</code> + <code class="inline">HudLayer(10)</code> 트리 검증 완료</td>
+              </tr>
+              <tr>
+                <td><strong>4. 그래픽 렌더링 &amp; 프레임 QA</strong></td>
+                <td><code class="inline">render_verify.sh ... 60 30</code> (<code class="inline">godot-xvfb-run</code>)</td>
+                <td><span style="color:var(--green);font-weight:700;">PASS</span> · 60 frames in 3s (CPU 0.60ms / GPU 30.42ms)</td>
+                <td>WSLg Weston 주기적 Segfault(signal 11)로부터 독립된 사용자 영역 <code class="inline">bubblewrap + Xvfb</code>로 안정 캡처</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <details class="json-box">
+          <summary>MCP <code class="inline">validate_scripts</code> &amp; <code class="inline">get_project_info</code> 실제 반환 JSON 보기</summary>
+          <pre id="mcpJsonPre"></pre>
+        </details>
+        <details class="json-box">
+          <summary>MCP <code class="inline">read_scene("scenes/vfx_showcase.tscn")</code> 노드 트리 JSON 보기 (요약/전체)</summary>
+          <pre id="sceneJsonPre"></pre>
+        </details>
+      </div>
+    </section>
+
+    <section id="sec-textures">
+      <div class="section-head">
+        <h2>4. 절차적 VFX 텍스처 아틀라스 (8종)</h2>
+        <div>
+          <button class="btn" id="btnToggleChecker" type="button">체커보드 투명 배경 토글</button>
+        </div>
+      </div>
+      <div class="tex-grid" id="texGrid"></div>
+    </section>
+
+    <section id="sec-code">
+      <div class="section-head">
+        <h2>5. 검증된 Godot 4 셰이더 &amp; GDScript 소스 코드</h2>
+        <p class="section-desc">실제 프로젝트에 포함되어 컴파일·렌더링 검증을 통과한 원본 소스</p>
+      </div>
+      <div class="card">
+        <div class="tabs" id="sourceTabs"></div>
+        <div class="code-shell">
+          <div class="code-bar">
+            <div>
+              <strong id="codeTitle">-</strong>
+              <span class="tex-meta" id="codePath" style="margin-left:8px;"></span>
+            </div>
+            <button class="btn" id="btnCopyCode" type="button">코드 복사</button>
+          </div>
+          <pre class="code-view" id="codeContent"></pre>
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      <div>Repository: <a href="https://github.com/slalglel3/godot4-studio-showcase" target="_blank" rel="noopener">github.com/slalglel3/godot4-studio-showcase</a></div>
+      <div>Toolchain: Godot 4.7.2-stable · godot-mcp v3.1.0 (157 tools) · Bubblewrap Xvfb + Vulkan llvmpipe</div>
+    </footer>
+  </div>
+
+  <div class="lightbox" id="lightbox" aria-hidden="true">
+    <img id="lightboxImg" src="" alt="Zoomed verification image" />
+  </div>
+
+  <script src="data/showcase_bundle.js"></script>
+  <script>
+    (function () {
+      const data = window.GODOT_SHOWCASE_DATA;
+      if (!data) return;
+
+      const rep = data.report;
+      const env = rep.environment;
+      const rv = rep.render_verify;
+      const val = rep.mcp_validate_scripts;
+
+      // Hero badges
+      const badges = [
+        { text: "Godot " + env.godot_version, cls: "" },
+        { text: env.renderer, cls: "cyan" },
+        { text: env.mcp_server, cls: "gold" },
+        { text: `GDScript ${val.fileCount}/${val.fileCount} Valid (0 Errors)`, cls: "" },
+        { text: `MovieMaker ${rv.frames_captured}f @ ${env.fps}fps (${rv.wall_time_sec}s)`, cls: "cyan" }
+      ];
+      const badgesEl = document.getElementById("heroBadges");
+      badges.forEach(b => {
+        const span = document.createElement("span");
+        span.className = "badge";
+        const dot = document.createElement("span");
+        dot.className = "dot" + (b.cls ? " " + b.cls : "");
+        span.appendChild(dot);
+        span.appendChild(document.createTextNode(b.text));
+        badgesEl.appendChild(span);
+      });
+
+      // KPIs
+      const kpis = [
+        { label: "Godot Engine", value: "4.7.2-stable", cls: "cyan", sub: "Forward+ HDR Glow (Threshold 0.95)" },
+        { label: "MCP Static Check", value: `${val.fileCount} / ${val.fileCount} PASS`, cls: "ok", sub: `Errors: ${val.filesWithErrors} (godot:validate_scripts)` },
+        { label: "MovieMaker Render", value: `${rv.frames_captured}f in ${rv.wall_time_sec}s`, cls: "gold", sub: `CPU ${rv.cpu_avg_ms_per_frame.toFixed(2)}ms · GPU ${rv.gpu_avg_ms_per_frame.toFixed(2)}ms / frame` },
+        { label: "Assets & Shaders", value: `${rep.mcp_project_info.structure.assets} PNG / 5 Shader`, cls: "", sub: "Shockwave · Additive · Dissolve · Flash · Cut-in" }
+      ];
+      const kpiGrid = document.getElementById("kpiGrid");
+      kpis.forEach(k => {
+        const card = document.createElement("div");
+        card.className = "kpi";
+        const l = document.createElement("div"); l.className = "kpi-label"; l.textContent = k.label;
+        const v = document.createElement("div"); v.className = "kpi-value " + k.cls; v.textContent = k.value;
+        const s = document.createElement("div"); s.className = "kpi-sub"; s.textContent = k.sub;
+        card.append(l, v, s);
+        kpiGrid.appendChild(card);
+      });
+
+      // Video controls
+      const video = document.getElementById("demoVideo");
+      const timeLbl = document.getElementById("videoTimeLabel");
+      document.getElementById("btnPlayToggle").addEventListener("click", () => {
+        if (video.paused) video.play(); else video.pause();
+      });
+      document.querySelectorAll(".speed-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+          document.querySelectorAll(".speed-btn").forEach(b => b.classList.remove("active"));
+          btn.classList.add("active");
+          video.playbackRate = parseFloat(btn.dataset.speed);
+        });
+      });
+      video.addEventListener("timeupdate", () => {
+        const dur = Number.isFinite(video.duration) ? video.duration : 2.0;
+        timeLbl.textContent = `${video.currentTime.toFixed(2)}s / ${dur.toFixed(2)}s`;
+      });
+
+      // Frame scrubber
+      const frames = data.frames;
+      const slider = document.getElementById("frameSlider");
+      const preview = document.getElementById("framePreview");
+      const frameTag = document.getElementById("frameTag");
+      const frameText = document.getElementById("frameText");
+      const jumpPills = document.getElementById("jumpPills");
+      slider.max = String(frames.length - 1);
+
+      function selectFrame(idx) {
+        const f = frames[idx];
+        slider.value = String(idx);
+        preview.src = f.path;
+        frameTag.textContent = `f${String(f.frame).padStart(3, "0")} · ${f.timeSec.toFixed(2)}s`;
+        frameText.textContent = f.caption;
+        Array.from(jumpPills.children).forEach((btn, i) => {
+          btn.classList.toggle("active", i === idx);
+        });
+      }
+
+      frames.forEach((f, idx) => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "btn";
+        btn.textContent = `f${String(f.frame).padStart(3, "0")}`;
+        btn.addEventListener("click", () => selectFrame(idx));
+        jumpPills.appendChild(btn);
+      });
+      slider.addEventListener("input", () => selectFrame(parseInt(slider.value, 10)));
+      selectFrame(5); // f_0024 Shockwave Peak
+
+      // Lightbox
+      const lightbox = document.getElementById("lightbox");
+      const lightboxImg = document.getElementById("lightboxImg");
+      function openLightbox(src) {
+        lightboxImg.src = src;
+        lightbox.classList.add("open");
+      }
+      preview.addEventListener("click", () => openLightbox(preview.src));
+      document.getElementById("contactSheetImg").addEventListener("click", (e) => openLightbox(e.target.src));
+      lightbox.addEventListener("click", () => lightbox.classList.remove("open"));
+      document.addEventListener("keydown", (e) => {
+        if (e.key === "Escape") lightbox.classList.remove("open");
+      });
+
+      // MCP JSON viewers
+      document.getElementById("mcpJsonPre").textContent = JSON.stringify({
+        project_info: rep.mcp_project_info,
+        validate_scripts: rep.mcp_validate_scripts,
+        render_verify: rep.render_verify
+      }, null, 2);
+      document.getElementById("sceneJsonPre").textContent = JSON.stringify(data.read_scene, null, 2);
+
+      // Textures
+      const texGrid = document.getElementById("texGrid");
+      const previewBoxes = [];
+      data.textures.forEach(t => {
+        const card = document.createElement("div");
+        card.className = "tex-card";
+        const box = document.createElement("div");
+        box.className = "tex-preview";
+        const img = document.createElement("img");
+        img.src = t.path;
+        img.alt = t.name;
+        img.loading = "lazy";
+        img.style.cursor = "zoom-in";
+        img.addEventListener("click", () => openLightbox(t.path));
+        box.appendChild(img);
+        previewBoxes.push(box);
+
+        const nm = document.createElement("div");
+        nm.className = "tex-name";
+        nm.textContent = t.name;
+
+        const desc = document.createElement("div");
+        desc.style.fontSize = "12.5px";
+        desc.textContent = t.desc;
+
+        const meta = document.createElement("div");
+        meta.className = "tex-meta";
+        meta.textContent = `${t.width}×${t.height} · ${t.mode} · ${(t.bytes / 1024).toFixed(1)} KB`;
+
+        card.append(box, nm, desc, meta);
+        texGrid.appendChild(card);
+      });
+
+      let checkerOn = false;
+      document.getElementById("btnToggleChecker").addEventListener("click", (e) => {
+        checkerOn = !checkerOn;
+        e.target.classList.toggle("active", checkerOn);
+        previewBoxes.forEach(b => b.classList.toggle("checker", checkerOn));
+      });
+
+      // Source tabs
+      const tabsEl = document.getElementById("sourceTabs");
+      const codeTitle = document.getElementById("codeTitle");
+      const codePath = document.getElementById("codePath");
+      const codeContent = document.getElementById("codeContent");
+      let activeSourceIdx = 0;
+
+      function selectSource(idx) {
+        activeSourceIdx = idx;
+        const s = data.sources[idx];
+        codeTitle.textContent = s.desc;
+        codePath.textContent = s.path;
+        codeContent.textContent = s.content;
+        Array.from(tabsEl.children).forEach((b, i) => b.classList.toggle("active", i === idx));
+      }
+
+      data.sources.forEach((s, idx) => {
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className = "btn";
+        btn.textContent = s.name;
+        btn.addEventListener("click", () => selectSource(idx));
+        tabsEl.appendChild(btn);
+      });
+      selectSource(0);
+
+      document.getElementById("btnCopyCode").addEventListener("click", async (e) => {
+        const s = data.sources[activeSourceIdx];
+        try {
+          await navigator.clipboard.writeText(s.content);
+          e.target.textContent = "복사됨!";
+          setTimeout(() => { e.target.textContent = "코드 복사"; }, 1200);
+        } catch (_) {
+          e.target.textContent = "복사 실패";
+        }
+      });
+    })();
+  </script>
+</body>
+</html>

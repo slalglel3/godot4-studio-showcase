@@ -1,0 +1,71 @@
+{
+  "generated_at": "2026-11-14T15:56:40+09:00",
+  "environment": {
+    "godot_version": "4.7.2.stable.official.ed1daf0bf",
+    "renderer": "Vulkan 1.4.335 - Forward+ - llvmpipe (LLVM 21.1.8, 256 bits)",
+    "resolution": "1280x720",
+    "fps": 30,
+    "display_isolation": "godot-xvfb-run (bubblewrap + user-space Xvfb)",
+    "mcp_server": "godot (@tugcantopaloglu/godot-mcp v3.1.0, 157 lazy tools)"
+  },
+  "render_verify": {
+    "command": "render_verify.sh godot_project render_out 60 30",
+    "frames_captured": 60,
+    "duration_sec": 2.0,
+    "wall_time_sec": 3,
+    "cpu_render_sec": 0.04,
+    "cpu_avg_ms_per_frame": 0.60,
+    "gpu_render_sec": 1.82,
+    "gpu_avg_ms_per_frame": 30.42,
+    "encoding_sec": 0.49,
+    "encoding_avg_ms_per_frame": 8.18
+  },
+  "mcp_project_info": {
+    "name": "Godot4StudioShowcase",
+    "path": "/home/slalglel/godot4-studio-showcase/godot_project",
+    "godotVersion": "4.7.2.stable.official.ed1daf0bf",
+    "isDotnet": false,
+    "structure": {
+      "scenes": 1,
+      "scripts": 4,
+      "assets": 8,
+      "other": 23
+    }
+  },
+  "mcp_validate_scripts": {
+    "scope": "all",
+    "fileCount": 4,
+    "filesWithErrors": 0,
+    "allValid": true,
+    "results": [
+      {
+        "scriptPath": "scenes/vfx_showcase.gd",
+        "checked": true,
+        "valid": true,
+        "errorCount": 0,
+        "errors": []
+      },
+      {
+        "scriptPath": "shared/scripts/boss_dual_gauge.gd",
+        "checked": true,
+        "valid": true,
+        "errorCount": 0,
+        "errors": []
+      },
+      {
+        "scriptPath": "shared/scripts/squad_skill_runner.gd",
+        "checked": true,
+        "valid": true,
+        "errorCount": 0,
+        "errors": []
+      },
+      {
+        "scriptPath": "shared/scripts/vfx_director.gd",
+        "checked": true,
+        "valid": true,
+        "errorCount": 0,
+        "errors": []
+      }
+    ]
+  }
+}
