@@ -1,18 +1,17 @@
-[gd_scene load_steps=16 format=3]
+[gd_scene load_steps=15 format=3]
 
 [ext_resource type="Script" path="res://scenes/meteor_showcase.gd" id="1_main"]
 [ext_resource type="Script" path="res://shared/scripts/vfx_director.gd" id="2_dir"]
 [ext_resource type="Script" path="res://shared/scripts/boss_dual_gauge.gd" id="3_boss"]
-[ext_resource type="Texture2D" path="res://assets/textures/arena_bg.png" id="4_bg"]
-[ext_resource type="Texture2D" path="res://assets/sprites/mage_caster.png" id="5_mage"]
-[ext_resource type="Texture2D" path="res://assets/sprites/boss_kardon.png" id="6_boss"]
-[ext_resource type="Texture2D" path="res://assets/sprites/meteor_rock.png" id="7_meteor"]
-[ext_resource type="Texture2D" path="res://shared/textures/magic_zodiac.png" id="8_zodiac"]
-[ext_resource type="Texture2D" path="res://shared/textures/glow_radial.png" id="9_glow"]
-[ext_resource type="Texture2D" path="res://shared/textures/spark_streak.png" id="10_spark"]
-[ext_resource type="Texture2D" path="res://shared/textures/shadow_oval.png" id="11_shadow"]
-[ext_resource type="Shader" path="res://shared/shaders/vfx_dissolve_curse.gdshader" id="12_curse"]
-[ext_resource type="Texture2D" path="res://shared/textures/noise_fbm.png" id="13_fbm"]
+[ext_resource type="Script" path="res://shared/scripts/subviewport_stage_bridge.gd" id="4_bridge"]
+[ext_resource type="Texture2D" path="res://assets/textures/arena_bg.png" id="5_bg"]
+[ext_resource type="Texture2D" path="res://assets/sprites/meteor_rock.png" id="6_meteor"]
+[ext_resource type="Texture2D" path="res://shared/textures/magic_zodiac.png" id="7_zodiac"]
+[ext_resource type="Texture2D" path="res://shared/textures/glow_radial.png" id="8_glow"]
+[ext_resource type="Texture2D" path="res://shared/textures/spark_streak.png" id="9_spark"]
+[ext_resource type="Texture2D" path="res://shared/textures/shadow_oval.png" id="10_shadow"]
+[ext_resource type="Shader" path="res://shared/shaders/vfx_dissolve_curse.gdshader" id="11_curse"]
+[ext_resource type="Texture2D" path="res://shared/textures/noise_fbm.png" id="12_fbm"]
 
 [sub_resource type="Environment" id="Environment_hdr"]
 background_mode = 3
@@ -28,16 +27,16 @@ blend_mode = 1
 light_mode = 1
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_curse"]
-shader = ExtResource("12_curse")
-shader_parameter/noise_tex = ExtResource("13_fbm")
-shader_parameter/dark_core = Color(0.05, 0.01, 0.08, 1)
-shader_parameter/burn_color = Color(0.75, 0.16, 0.95, 1)
-shader_parameter/burn_hdr = 3.2
-shader_parameter/progress = 0.28
-shader_parameter/edge_width = 0.16
+shader = ExtResource("11_curse")
+shader_parameter/noise_tex = ExtResource("12_fbm")
+shader_parameter/dark_core = Color(0.06, 0.01, 0.1, 0.36)
+shader_parameter/burn_color = Color(0.68, 0.16, 0.95, 1)
+shader_parameter/burn_hdr = 2.4
+shader_parameter/progress = 0.54
+shader_parameter/edge_width = 0.22
 shader_parameter/flame_scroll = Vector2(0.05, 1.3)
 shader_parameter/glitch_steps = 24.0
-shader_parameter/glitch_amount = 0.03
+shader_parameter/glitch_amount = 0.015
 
 [node name="MeteorShowcase" type="Node2D"]
 script = ExtResource("1_main")
@@ -50,7 +49,7 @@ position = Vector2(640, 360)
 
 [node name="ArenaBG" type="Sprite2D" parent="."]
 position = Vector2(640, 360)
-texture = ExtResource("4_bg")
+texture = ExtResource("5_bg")
 
 [node name="Arena" type="Node2D" parent="."]
 
@@ -59,63 +58,58 @@ position = Vector2(925, 588)
 scale = Vector2(2.2, 0.72)
 
 [node name="CraterGlow" type="Sprite2D" parent="Arena/CraterPlane"]
-texture = ExtResource("9_glow")
+texture = ExtResource("8_glow")
 
 [node name="TelegraphPlane" type="Node2D" parent="Arena"]
 position = Vector2(925, 588)
 scale = Vector2(1.42, 0.44)
 
 [node name="ImpactTelegraph" type="Sprite2D" parent="Arena/TelegraphPlane"]
-texture = ExtResource("8_zodiac")
+texture = ExtResource("7_zodiac")
 
 [node name="MageRoot" type="Node2D" parent="Arena"]
 position = Vector2(290, 488)
 
 [node name="Shadow" type="Sprite2D" parent="Arena/MageRoot"]
 modulate = Color(0, 0, 0, 0.65)
-position = Vector2(-6, 114)
-scale = Vector2(0.95, 0.5)
-texture = ExtResource("11_shadow")
+position = Vector2(-6, 108)
+scale = Vector2(1.05, 0.48)
+texture = ExtResource("10_shadow")
 
 [node name="CastPlane" type="Node2D" parent="Arena/MageRoot"]
-position = Vector2(0, 110)
-scale = Vector2(0.95, 0.34)
+position = Vector2(0, 108)
+scale = Vector2(1.05, 0.36)
 
 [node name="CastZodiac" type="Sprite2D" parent="Arena/MageRoot/CastPlane"]
-texture = ExtResource("8_zodiac")
-
-[node name="MageSprite" type="Sprite2D" parent="Arena/MageRoot"]
-scale = Vector2(0.3, 0.3)
-texture = ExtResource("5_mage")
-
-[node name="StaffOrb" type="Sprite2D" parent="Arena/MageRoot"]
-position = Vector2(92, -100)
-scale = Vector2(0.55, 0.55)
-texture = ExtResource("9_glow")
-
-[node name="StaffFlare" type="Sprite2D" parent="Arena/MageRoot"]
-position = Vector2(92, -100)
-scale = Vector2(0.5, 0.3)
-texture = ExtResource("10_spark")
+texture = ExtResource("7_zodiac")
 
 [node name="BossRoot" type="Node2D" parent="Arena"]
 position = Vector2(935, 466)
 
 [node name="Shadow" type="Sprite2D" parent="Arena/BossRoot"]
-modulate = Color(0, 0, 0, 0.7)
-position = Vector2(4, 134)
-scale = Vector2(1.45, 0.65)
-texture = ExtResource("11_shadow")
+modulate = Color(0, 0, 0, 0.72)
+position = Vector2(0, 128)
+scale = Vector2(1.48, 0.62)
+texture = ExtResource("10_shadow")
 
 [node name="BossCurse" type="Sprite2D" parent="Arena/BossRoot"]
 material = SubResource("ShaderMaterial_curse")
-position = Vector2(10, 40)
-scale = Vector2(1.45, 1.9)
-texture = ExtResource("9_glow")
+position = Vector2(0, 124)
+scale = Vector2(1.15, 0.42)
+texture = ExtResource("8_glow")
 
-[node name="BossSprite" type="Sprite2D" parent="Arena/BossRoot"]
-scale = Vector2(0.34, 0.34)
-texture = ExtResource("6_boss")
+[node name="SubViewportStageBridge" type="Node2D" parent="Arena"]
+script = ExtResource("4_bridge")
+
+[node name="StaffOrb" type="Sprite2D" parent="Arena"]
+position = Vector2(360, 340)
+scale = Vector2(0.45, 0.45)
+texture = ExtResource("8_glow")
+
+[node name="StaffFlare" type="Sprite2D" parent="Arena"]
+position = Vector2(360, 340)
+scale = Vector2(0.42, 0.28)
+texture = ExtResource("9_spark")
 
 [node name="SkyVfx" type="Node2D" parent="."]
 
@@ -127,11 +121,11 @@ rotation = -0.52
 scale = Vector2(1.25, 0.45)
 
 [node name="RiftRing" type="Sprite2D" parent="SkyVfx/SkyRift/RiftPlane"]
-texture = ExtResource("8_zodiac")
+texture = ExtResource("7_zodiac")
 
 [node name="RiftCore" type="Sprite2D" parent="SkyVfx/SkyRift"]
 scale = Vector2(1.55, 0.68)
-texture = ExtResource("9_glow")
+texture = ExtResource("8_glow")
 
 [node name="MeteorRoot" type="Node2D" parent="SkyVfx"]
 position = Vector2(1145, 82)
@@ -141,25 +135,25 @@ position = Vector2(1145, 82)
 [node name="FlameTailB" type="Sprite2D" parent="SkyVfx/MeteorRoot/WakeContainer"]
 position = Vector2(-115, 0)
 scale = Vector2(2.6, 1.45)
-texture = ExtResource("9_glow")
+texture = ExtResource("8_glow")
 
 [node name="FlameTailA" type="Sprite2D" parent="SkyVfx/MeteorRoot/WakeContainer"]
 position = Vector2(-145, 0)
 scale = Vector2(2.8, 1.1)
-texture = ExtResource("10_spark")
+texture = ExtResource("9_spark")
 
 [node name="FireHalo" type="Sprite2D" parent="SkyVfx/MeteorRoot/WakeContainer"]
 scale = Vector2(1.9, 1.4)
-texture = ExtResource("9_glow")
+texture = ExtResource("8_glow")
 
 [node name="MeteorCore" type="Sprite2D" parent="SkyVfx/MeteorRoot"]
 scale = Vector2(0.28, 0.28)
-texture = ExtResource("7_meteor")
+texture = ExtResource("6_meteor")
 
 [node name="MeteorSparks" type="CPUParticles2D" parent="SkyVfx/MeteorRoot"]
 material = SubResource("CanvasItemMaterial_add")
 amount = 42
-texture = ExtResource("10_spark")
+texture = ExtResource("9_spark")
 lifetime = 0.45
 speed_scale = 1.35
 randomness = 0.65
@@ -179,24 +173,24 @@ position = Vector2(925, 588)
 scale = Vector2(1.5, 0.5)
 
 [node name="ImpactRing" type="Sprite2D" parent="ImpactVfx/ImpactRingPlane"]
-texture = ExtResource("8_zodiac")
+texture = ExtResource("7_zodiac")
 
 [node name="ImpactPillar" type="Sprite2D" parent="ImpactVfx"]
 position = Vector2(925, 360)
 scale = Vector2(2.0, 3.2)
-texture = ExtResource("9_glow")
+texture = ExtResource("8_glow")
 
 [node name="ImpactDome" type="Sprite2D" parent="ImpactVfx"]
 position = Vector2(925, 520)
 scale = Vector2(2.4, 2.0)
-texture = ExtResource("9_glow")
+texture = ExtResource("8_glow")
 
 [node name="ImpactSparks" type="CPUParticles2D" parent="ImpactVfx"]
 material = SubResource("CanvasItemMaterial_add")
 position = Vector2(925, 520)
 emitting = false
 amount = 56
-texture = ExtResource("10_spark")
+texture = ExtResource("9_spark")
 lifetime = 0.72
 one_shot = true
 explosiveness = 0.92

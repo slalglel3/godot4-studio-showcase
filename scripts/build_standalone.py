@@ -36,14 +36,18 @@ def build() -> None:
     read_scene = json.load(open(f"{REPO}/data/read_scene.json", encoding="utf-8"))
 
     source_files = [
-        ("meteor_showcase.gd", "godot_project/scenes/meteor_showcase.gd", "gdscript", "마법사 메테오 소환 시전·낙하·충격파·보스 피격 플래시 메인 타임라인"),
-        ("meteor_showcase.tscn", "godot_project/scenes/meteor_showcase.tscn", "scene", "고딕 흑요석 결투장 + 마법사 + 보스 + 메테오 CPUParticles2D + HDR 씬"),
+        ("meteor_showcase.gd", "godot_project/scenes/meteor_showcase.gd", "gdscript", "2.5D Skeleton3D 메테오 소환 · 지팡이 소켓 추적 · 보스 피격 & 대검 반격 타임라인"),
+        ("meteor_showcase.tscn", "godot_project/scenes/meteor_showcase.tscn", "scene", "SubViewport 3D 리깅 액터 + 2D HDR 아레나 + 메테오 CPUParticles2D 씬"),
+        ("rigged_actor_3d.gd", "godot_project/shared/scripts/rigged_actor_3d.gd", "gdscript", "Skeleton3D / AnimationPlayer 클립 재생 · 툰 아웃라인 · 본 소켓 추적 컨트롤러"),
+        ("subviewport_stage_bridge.gd", "godot_project/shared/scripts/subviewport_stage_bridge.gd", "gdscript", "투명 SubViewport 3D 액터 스테이지 & 3D→2D 좌표 언프로젝션 브릿지"),
+        ("toon_cel_outline.gdshader", "godot_project/shared/shaders/toon_cel_outline.gdshader", "shader", "3단 계조 툰 셰이딩 + 프레넬 림라이트 + 히트 플래시 Spatial 셰이더"),
+        ("toon_outline_nextpass.gdshader", "godot_project/shared/shaders/toon_outline_nextpass.gdshader", "shader", "모델 스케일 보정 역법선 3D 잉크 아웃라인 Next-Pass 셰이더"),
         ("vfx_director.gd", "godot_project/shared/scripts/vfx_director.gd", "gdscript", "감쇠 트라우마 셰이크, 충격파 레이어 분리, 겹침 방지 컷인 큐"),
         ("boss_dual_gauge.gd", "godot_project/shared/scripts/boss_dual_gauge.gd", "gdscript", "보스 HP(주황) + 잔상 트레일(아이보리) + 브레이크 게이지(화이트)"),
         ("squad_skill_runner.gd", "godot_project/shared/scripts/squad_skill_runner.gd", "gdscript", "스쿼드 쿨타임·브레이크 사이클 자동 스케줄러"),
         ("vfx_shockwave.gdshader", "godot_project/shared/shaders/vfx_shockwave.gdshader", "shader", "hint_screen_texture 기반 방사형 왜곡 + 색수차 충격파 셰이더"),
         ("vfx_additive_scroll.gdshader", "godot_project/shared/shaders/vfx_additive_scroll.gdshader", "shader", "HDR Emissive Bloom + UV 스크롤 가산 혼합 불꽃/마법진/꼬리"),
-        ("vfx_hit_flash.gdshader", "godot_project/shared/shaders/vfx_hit_flash.gdshader", "shader", "캐릭터 림 아웃라인(마법사 시전) + 보스 피격 백색/황금 플래시"),
+        ("vfx_hit_flash.gdshader", "godot_project/shared/shaders/vfx_hit_flash.gdshader", "shader", "2D 캐릭터 림 아웃라인 + 피격 백색/황금 플래시 셰이더"),
         ("vfx_dissolve_curse.gdshader", "godot_project/shared/shaders/vfx_dissolve_curse.gdshader", "shader", "노이즈 디졸브 + 글리치 + 보라색 저주 오라 셰이더"),
         ("ui_cutin_banner.gdshader", "godot_project/shared/shaders/ui_cutin_banner.gdshader", "shader", "사선 클리핑 평행사변형 스킬 컷인 배너 셰이더"),
         ("vfx_showcase.gd", "godot_project/scenes/vfx_showcase.gd", "gdscript", "베이스라인 셰이더/컷인 테스트 씬 스크립트"),
@@ -61,15 +65,15 @@ def build() -> None:
             })
 
     custom_asset_specs = [
-        ("mage_caster.png", "godot_project/assets/sprites/mage_caster.png", True, "홍염 대마법사 (Side-View Battle Sprite + clean_cutout.py)"),
+        ("mage_cast_sheet.png", "godot_project/assets/sprites/mage_cast_sheet.png", True, "홍염 대마법사 Skeleton3D Cast_Meteor_Heavy 6프레임 시트 (Blender 베이크)"),
+        ("boss_attack_sheet.png", "godot_project/assets/sprites/boss_attack_sheet.png", True, "보스 카르돈 Skeleton3D Sword_Attack 6프레임 시트 (Blender 베이크)"),
         ("mage_cutin.png", "godot_project/assets/sprites/mage_cutin.png", False, "스킬 컷인 배너 일러스트 ('멸망의 메테오!!')"),
-        ("boss_kardon.png", "godot_project/assets/sprites/boss_kardon.png", True, "저무는 카르돈 보스 스프라이트 (clean_cutout.py)"),
         ("meteor_rock.png", "godot_project/assets/sprites/meteor_rock.png", True, "용암 균열 화산 운석 본체 (clean_cutout.py)"),
         ("arena_bg.png", "godot_project/assets/textures/arena_bg.png", False, "고딕 흑요석 결투장 2.5D 배경 (1280×720)"),
     ]
     custom_sprites = []
     for name, rel_path, has_alpha, desc in custom_asset_specs:
-        uri, ow, oh, mode = b64_webp_resized(rel_path, max_w=540, quality=88, preserve_alpha=has_alpha)
+        uri, ow, oh, mode = b64_webp_resized(rel_path, max_w=720, quality=88, preserve_alpha=has_alpha)
         custom_sprites.append({
             "name": name,
             "path": rel_path,
@@ -111,21 +115,21 @@ def build() -> None:
         })
 
     frames_meta = [
-        ("f_0001.png", 1, 0.00, "0.00s — 대치 개시: 홍염 대마법사 vs 저무는 카르돈 (흑요석의 수호자)"),
-        ("f_0007.png", 7, 0.20, "0.20s — 영창 개시: 마법사 발밑 2.5D 마법진 전개 + 지팡이 루비 코어 점화 + 컷인 진입"),
-        ("f_0014.png", 14, 0.43, "0.43s — 상공 소환 포탈(Sky Rift) 개방 시작 + 보스 발밑 메테오 낙하지점 전조(Telegraph)"),
-        ("f_0020.png", 20, 0.63, "0.63s — '멸망의 메테오!!' 아이 컷인 고정 + 하늘 마법진 & 타겟 링 가속"),
-        ("f_0028.png", 28, 0.90, "0.90s — 메테오 발사 직전 최대 영창 에너지 집중"),
-        ("f_0034.png", 34, 1.10, "1.10s — 상공 포탈에서 거대 용암 운석(MeteorRock) 출현 + 혜성 화염 꼬리 생성"),
-        ("f_0038.png", 38, 1.23, "1.23s — 대각선 궤적을 따라 가속 강하 + HDR 화염 꼬리 & 불꽃 파티클(42 sparks) 비산"),
-        ("f_0042.png", 42, 1.37, "1.37s — 보스 두상 직상방 강하 돌입 (낙하 스케일 확대 연출)"),
-        ("f_0046.png", 46, 1.50, "1.50s — 타격 60ms 직전 초고속 낙하 임계 프레임"),
-        ("f_0049.png", 49, 1.60, "1.60s — 메테오 직격! 보스 백색/황금 Hit-Flash + 1차 색수차 스크린 충격파(UI 미왜곡)"),
-        ("f_0052.png", 52, 1.70, "1.70s — 2차 충격파 확산 + 용암 화염 기둥/폭발 돔 팽창 + 보스 넉백 리코일"),
-        ("f_0056.png", 56, 1.83, "1.83s — 보스 HP 대폭 차감(-4350 HP / -520 Stagger) + 56개 방사형 스파크 분출"),
-        ("f_0064.png", 64, 2.10, "2.10s — 폭발 여파 소강 & 보스 게이지 아이보리 잔상(Trailing Ghost) 드레인"),
-        ("f_0076.png", 76, 2.50, "2.50s — 바닥 용암 크레이터 작열 잔광 유지 & 보스 스탠스 복귀"),
-        ("f_0090.png", 90, 2.97, "2.97s — 90프레임(3.00s) 무오류 완결"),
+        ("f_0001.png", 1, 0.00, "0.00s — 3D Skeleton3D 대치 개시: 홍염 마법사(Spell_Enter) vs 심연 대검 보스 카르돈(Sword_Idle)"),
+        ("f_0007.png", 7, 0.20, "0.20s — 지팡이 거상 + StaffTip 뼈 소켓 추종 마력 오브 점화 + 2.5D 성좌 마법진 전개"),
+        ("f_0014.png", 14, 0.43, "0.43s — 상체 비틀기 Cast_Meteor_Heavy 영창 돌입 + 상공 소환 포탈(Sky Rift) 개방"),
+        ("f_0018.png", 18, 0.57, "0.57s — '멸망의 메테오!!' 컷인 고정 + 마법사 왼팔 전개 & 보스 발밑 타겟 링 가속"),
+        ("f_0028.png", 28, 0.90, "0.90s — 양팔·척추 아크 최대 개방(Windup) + 포탈에서 거대 용암 운석 출현 시작"),
+        ("f_0036.png", 36, 1.17, "1.17s — 관절 연동 영창 정점 + 혜성 화염 꼬리·스파크 42입자 대각선 낙하 가속"),
+        ("f_0042.png", 42, 1.37, "1.37s — 운석 보스 두상 직상방 강하 + 마법사 지팡이 내리찍기(Slam) 전환"),
+        ("f_0046.png", 46, 1.50, "1.50s — 타격 80ms 직전: 지팡이 하향 꽂기 팔로우 스루 & 운석 임계 접근"),
+        ("f_0049.png", 49, 1.60, "1.60s — 메테오 직격! 보스 3D 백색 Hit-Flash + Hit_Chest 피격 경직 + 색수차 스크린 충격파"),
+        ("f_0052.png", 52, 1.70, "1.70s — 2차 충격파 확산 + 용암 폭발 기둥·돔 팽창 + 56개 방사형 스파크 분출"),
+        ("f_0056.png", 56, 1.83, "1.83s — 마법사 무릎 굽힘 피니시 리코일 & 보스 게이지(-4,350 HP / -520 Break) 아이보리 잔상"),
+        ("f_0064.png", 64, 2.10, "2.10s — 폭발 소강·용암 크레이터 잔광 + 보스 피격 경직에서 반격 태세 전환"),
+        ("f_0072.png", 72, 2.37, "2.37s — 보스 카르돈 반격 돌진 개시: 상체 전경 & 심연의 대검 후방 회전"),
+        ("f_0082.png", 82, 2.70, "2.70s — 보스 Sword_Attack 풀 런지: 무릎 깊게 굽히며 보라색 발광 대검 하단 횡베기"),
+        ("f_0090.png", 90, 2.97, "2.97s — 마법사 전투 대기 복귀 vs 보스 대검 횡베기 피니시 (90프레임 3.00s 무결점 완료)"),
     ]
     frames = []
     for fn, num, sec, caption in frames_meta:
@@ -161,7 +165,7 @@ def build() -> None:
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Godot 4 Game Studio — Meteor Summon &amp; VFX Showcase (v1.1.0)</title>
+  <title>Godot 4 Game Studio — 3D Rigged Meteor Combat Showcase (v1.2.0)</title>
   <style>
     :root {{
       --bg: #0a0c12;
@@ -336,17 +340,17 @@ def build() -> None:
     <div id="fatalError" class="error-banner hidden"></div>
 
     <header class="hero">
-      <div class="eyebrow">Godot 4 Game Studio · Meteor Summon Combat Showcase (v1.1.0)</div>
-      <h1>홍염 대마법사 — '멸망의 메테오!!' 스킬 &amp; 운석 낙하 검증 리포트</h1>
+      <div class="eyebrow">Godot 4 Game Studio · 3D Rigged Meteor Combat Showcase (v1.2.0)</div>
+      <h1>3D 관절 리깅 홍염 대마법사 vs 심연의 카르돈 — '멸망의 메테오!!' 실전 전투</h1>
       <p class="subtitle">
-        신규 생성한 마법사(<code class="inline">mage_caster.png</code>)·컷인(<code class="inline">mage_cutin.png</code>)·보스(<code class="inline">boss_kardon.png</code>)·화산 운석(<code class="inline">meteor_rock.png</code>)·결투장(<code class="inline">arena_bg.png</code>) 에셋을 Godot 4.7.2 <code class="inline">Forward+</code> HDR 씬(<code class="inline">meteor_showcase.tscn</code>)으로 통합해 90프레임(3.00s) 시전→상공 소환→운석 낙하→대폭발 충격파를 렌더링 검증한 <strong>모바일/오프라인 단일 파일</strong> 리포트입니다.
+        <strong>Blender 4.5.16 LTS + CC0 모션 리타게팅(<code class="inline">retarget_ual.py</code>)</strong>으로 구축한 <code class="inline">scarlet_mage.glb</code>·<code class="inline">boss_kardon.glb</code>(<code class="inline">Skeleton3D</code> 53본)을 Godot 4.7.2 <code class="inline">SubViewportStageBridge</code>로 2.5D HDR 결투장에 통합해 팔다리 관절 움직임, <code class="inline">StaffTip</code> 소켓 마력 오브 추적, 메테오 직격 피격(<code class="inline">Hit_Chest</code>) 및 보스 대검 반격(<code class="inline">Sword_Attack</code>)까지 렌더링 검증한 <strong>모바일/오프라인 단일 파일</strong> 리포트입니다.
       </p>
       <div class="badge-row" id="heroBadges"></div>
       <nav class="nav-pills">
-        <a href="#sec-render">1. 메테오 영상 &amp; 타임라인</a>
+        <a href="#sec-render">1. 3D 리깅 메테오 영상</a>
         <a href="#sec-sheet">2. 6-Frame QA 시트</a>
-        <a href="#sec-sprites">3. 생성 캐릭터 · 운석 · 배경 (5종)</a>
-        <a href="#sec-mcp">4. MCP &amp; 렌더 검증 결과</a>
+        <a href="#sec-sprites">3. 3D 리깅 시트 · 에셋 (5종)</a>
+        <a href="#sec-mcp">4. Blender · MCP 검증 결과</a>
         <a href="#sec-textures">5. 절차적 VFX 텍스처 (8종)</a>
         <a href="#sec-code">6. 셰이더 &amp; GDScript 소스</a>
       </nav>
@@ -358,8 +362,8 @@ def build() -> None:
 
     <section id="sec-render">
       <div class="section-head">
-        <h2>1. 메테오 소환 &amp; 운석 낙하 렌더 영상 + 프레임 스크러버</h2>
-        <p class="section-desc">3.00초(90프레임 @ 30fps, 1280×720, Vulkan 1.4.335 llvmpipe Forward+)</p>
+        <h2>1. 3D 관절 리깅 전투 &amp; 메테오 낙하 렌더 영상 + 프레임 스크러버</h2>
+        <p class="section-desc">3.00초(90프레임 @ 30fps, 1280×720, Vulkan 1.4.335 llvmpipe Forward+ + SubViewport MSAA 4x)</p>
       </div>
       <div class="media-grid">
         <div class="card">
@@ -379,7 +383,7 @@ def build() -> None:
             <span class="tex-meta" id="videoTimeLabel">0.00s / 3.00s</span>
           </div>
           <p class="tex-meta" style="margin: 10px 0 0;">
-            ※ <strong>연출 타임라인</strong>: 0.20s 아이 컷인(<code class="inline">멸망의 메테오!!</code>) → 0.42s 상공 포탈 + 바닥 2.5D 전조 → 0.92s 화산 운석 대각선 강하 → 1.56s 대폭발 기둥·스크린 충격파(HUD 미왜곡)·보스 히트 플래시 &amp; -4,350 HP 타격.
+            ※ <strong>전투 타임라인</strong>: 0.00s <code class="inline">Spell_Simple_Enter</code> 지팡이 거상 → 0.45s <code class="inline">Cast_Meteor_Heavy</code> 상체 비틀기 &amp; 아이 컷인 → 0.92s 용암 운석 강하 → 1.58s 직격(<code class="inline">Hit_Chest</code> 백색 플래시 + 색수차 충격파 + -4,350 HP) → 2.18s 보스 <code class="inline">Sword_Attack</code> 대검 반격 런지.
           </p>
         </div>
 
@@ -390,12 +394,12 @@ def build() -> None:
           <div class="scrubber-box">
             <input id="frameSlider" type="range" min="0" max="14" value="6" />
             <div class="frame-caption">
-              <span class="frame-tag" id="frameTag">f038 · 1.23s</span>
+              <span class="frame-tag" id="frameTag">f042 · 1.37s</span>
               <span id="frameText">로딩 중...</span>
             </div>
             <div class="toolbar" style="margin-top: 8px;">
               <button class="btn" id="btnAutoFrames" type="button">▶ 키프레임 슬라이드 재생</button>
-              <span class="tex-meta">슬라이더/버튼으로 메테오 궤적·폭발 정밀 검수</span>
+              <span class="tex-meta">슬라이더/버튼으로 3D 포즈·지팡이 소켓·충격파 정밀 검수</span>
             </div>
             <div class="jump-pills" id="jumpPills"></div>
           </div>
@@ -415,7 +419,7 @@ def build() -> None:
 
     <section id="sec-sprites">
       <div class="section-head">
-        <h2>3. 신규 생성 2D 캐릭터 · 운석 · 컷인 · 배경 에셋 (5종)</h2>
+        <h2>3. 3D 리깅 스프라이트 시트 · 컷인 · 운석 · 배경 에셋 (5종)</h2>
         <div><button class="btn" id="btnToggleSpriteChecker" type="button">체커보드 투명 배경 토글</button></div>
       </div>
       <div class="tex-grid" id="spriteGrid"></div>
@@ -423,8 +427,8 @@ def build() -> None:
 
     <section id="sec-mcp">
       <div class="section-head">
-        <h2>4. MCP 정적/씬 검증 &amp; MovieMaker 렌더 텔레메트리</h2>
-        <p class="section-desc">씬 및 스크립트 수정 후 재실행한 최종 검증 데이터</p>
+        <h2>4. Blender 3D 리타게팅 · MCP 정적 검증 · MovieMaker 텔레메트리</h2>
+        <p class="section-desc">2.5D Skeleton3D 전투 통합 후 재실행한 최종 검증 데이터</p>
       </div>
       <div class="card">
         <div class="table-wrap">
@@ -439,28 +443,28 @@ def build() -> None:
             </thead>
             <tbody>
               <tr>
-                <td><strong>1. 에셋 생성 &amp; 경량 알파 컷아웃</strong></td>
-                <td><code class="inline">image-generator</code> + <code class="inline">clean_cutout.py</code></td>
-                <td><span style="color:var(--green);font-weight:700;">PASS</span> · 5종 스프라이트/배경</td>
-                <td>Pillow/NumPy 기반 CPU 경량 컷아웃(PyTorch/rembg 미사용)으로 마법사·보스·메테오 알파 외곽선 깔끔 추출</td>
+                <td><strong>1. Blender 4.5.16 + CC0 리깅</strong></td>
+                <td><code class="inline">blender-xvfb-run</code> + <code class="inline">retarget_ual.py</code></td>
+                <td><span style="color:var(--green);font-weight:700;">PASS</span> · 2종 <code class="inline">.glb</code> + 2종 6f 시트</td>
+                <td><code class="inline">scarlet_mage.glb</code>(1.1MB, 6클립) &amp; <code class="inline">boss_kardon.glb</code>(1.5MB, 6클립) + <code class="inline">StaffTip</code>/<code class="inline">BladeTip</code> 본 소켓 내장</td>
               </tr>
               <tr>
                 <td><strong>2. Godot MCP 정적/타입 검증</strong></td>
                 <td><code class="inline">godot:validate_scripts (scope="all")</code></td>
-                <td><span style="color:var(--green);font-weight:700;">PASS</span> · 5/5 files (<code class="inline">filesWithErrors: 0</code>)</td>
-                <td>신규 <code class="inline">scenes/meteor_showcase.gd</code> 포함 전체 5개 GDScript 파싱/타입 오류 0건</td>
+                <td><span style="color:var(--green);font-weight:700;">PASS</span> · 7/7 files (<code class="inline">filesWithErrors: 0</code>)</td>
+                <td>신규 <code class="inline">RiggedActor3D</code>·<code class="inline">SubViewportStageBridge</code> 포함 전체 7개 GDScript 파싱/타입 오류 0건</td>
               </tr>
               <tr>
-                <td><strong>3. 씬 트리 &amp; 2.5D 원근 검증</strong></td>
+                <td><strong>3. 3D→2D 좌표 동기화 &amp; 툰 셰이더</strong></td>
                 <td><code class="inline">godot:read_scene("scenes/meteor_showcase.tscn")</code></td>
                 <td><span style="color:var(--green);font-weight:700;">PASS</span> · <code class="inline">MeteorShowcase</code></td>
-                <td>2.5D 바닥 마법진(<code class="inline">CastPlane</code>/<code class="inline">TelegraphPlane</code>) 부모 스케일 분리를 통해 타원 원근 회전 정상화</td>
+                <td>100x GLB 스케일 보정 3D 아웃라인(<code class="inline">toon_outline_nextpass</code>), 발밑 언프로젝션 마법진, <code class="inline">StaffTip</code> 오브 추적 정상</td>
               </tr>
               <tr>
                 <td><strong>4. MovieMaker 90프레임 렌더링</strong></td>
                 <td><code class="inline">render_verify.sh ... 90 30</code> (<code class="inline">godot-xvfb-run</code>)</td>
-                <td><span style="color:var(--green);font-weight:700;">PASS</span> · 90 frames in 5s (CPU 0.29ms / GPU 31.51ms)</td>
-                <td><code class="inline">f038</code> 운석 강하 궤적 정렬, <code class="inline">f049</code> 충격파·히트플래시·보스 게이지 차감 프레임 육안 검증 완료</td>
+                <td><span style="color:var(--green);font-weight:700;">PASS</span> · 90 frames in 11s (CPU 1.68ms / GPU 31.52ms)</td>
+                <td><code class="inline">f036</code> 시전·낙하, <code class="inline">f049</code> 백색 Hit-Flash·충격파·HP 차감, <code class="inline">f082</code> 보스 <code class="inline">Sword_Attack</code> 반격 육안 검증</td>
               </tr>
             </tbody>
           </table>
@@ -487,7 +491,7 @@ def build() -> None:
     <section id="sec-code">
       <div class="section-head">
         <h2>6. 검증된 Godot 4 셰이더 &amp; GDScript 소스 코드</h2>
-        <p class="section-desc">메테오 연출 씬 및 공용 파이프라인 전체 12개 파일</p>
+        <p class="section-desc">2.5D 리깅 컨트롤러 · 3D 툰 셰이더 · 메테오 연출 씬 전체 16개 파일</p>
       </div>
       <div class="card">
         <div class="tabs" id="sourceTabs"></div>
@@ -503,7 +507,7 @@ def build() -> None:
 
     <footer>
       <div>Repository: <a href="https://github.com/slalglel3/godot4-studio-showcase" target="_blank" rel="noopener">github.com/slalglel3/godot4-studio-showcase</a></div>
-      <div>Release v1.1.0 · Godot 4.7.2-stable · godot-mcp v3.1.0 (157 tools) · Bubblewrap Xvfb + Vulkan llvmpipe</div>
+      <div>Release v1.2.0 · Blender 4.5.16 LTS + Godot 4.7.2-stable · godot-mcp v3.1.0 · Xvfb + Vulkan llvmpipe</div>
     </footer>
   </div>
 
@@ -524,8 +528,8 @@ def build() -> None:
         const val = rep.mcp_validate_scripts;
 
         const badges = [
-          {{ text: "v1.1.0 Meteor Summon Standalone HTML", cls: "gold" }},
-          {{ text: "Godot " + env.godot_version, cls: "cyan" }},
+          {{ text: "v1.2.0 3D Rigged Combat Standalone HTML", cls: "gold" }},
+          {{ text: "Blender 4.5.16 LTS + Godot " + env.godot_version, cls: "cyan" }},
           {{ text: env.renderer, cls: "cyan" }},
           {{ text: env.mcp_server, cls: "" }},
           {{ text: `GDScript ${{val.fileCount}}/${{val.fileCount}} Valid (0 Errors)`, cls: "" }},
@@ -543,10 +547,10 @@ def build() -> None:
         }});
 
         const kpis = [
-          {{ label: "Skill Showcase", value: "멸망의 메테오!!", cls: "gold", sub: "홍염 대마법사 시전 → 상공 포탈 운석 강하 · 대폭발" }},
+          {{ label: "3D Rigged Combat", value: "Skeleton3D + 멸망의 메테오!!", cls: "gold", sub: "53본 UAL 리타게팅 · 마법사 시전 ↔ 보스 대검 반격" }},
           {{ label: "MCP Static Check", value: `${{val.fileCount}} / ${{val.fileCount}} PASS`, cls: "ok", sub: `Errors: ${{val.filesWithErrors}} (godot:validate_scripts)` }},
           {{ label: "MovieMaker Render", value: `${{rv.frames_captured}}f (${{rv.duration_sec.toFixed(1)}}s) in ${{rv.wall_time_sec}}s`, cls: "cyan", sub: `CPU ${{rv.cpu_avg_ms_per_frame.toFixed(2)}}ms · GPU ${{rv.gpu_avg_ms_per_frame.toFixed(2)}}ms / frame` }},
-          {{ label: "Custom + VFX Assets", value: `${{data.customSprites.length}} Sprites / ${{data.textures.length}} VFX`, cls: "", sub: "5 Shaders + 2 CPUParticles2D + Shockwave" }}
+          {{ label: "3D + VFX Pipeline", value: `${{data.customSprites.length}} Assets / ${{data.textures.length}} VFX`, cls: "", sub: "2 GLB Rigs · 7 Shaders · SubViewport 2.5D Bridge" }}
         ];
         const kpiGrid = document.getElementById("kpiGrid");
         kpis.forEach(k => {{

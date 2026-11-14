@@ -1,25 +1,26 @@
 {
-  "generated_at": "2026-11-14T16:29:15+09:00",
+  "generated_at": "2026-11-14T17:14:16+09:00",
   "environment": {
     "godot_version": "4.7.2.stable.official.ed1daf0bf",
     "renderer": "Vulkan 1.4.335 - Forward+ - llvmpipe (LLVM 21.1.8, 256 bits)",
     "resolution": "1280x720",
     "fps": 30,
     "display_isolation": "godot-xvfb-run (bubblewrap + user-space Xvfb)",
-    "mcp_server": "godot (@tugcantopaloglu/godot-mcp v3.1.0, 157 lazy tools)"
+    "mcp_server": "godot (@tugcantopaloglu/godot-mcp v3.1.0, 157 lazy tools)",
+    "blender_rigging": "Blender 4.5.16 LTS + CC0 UAL Retargeting (scarlet_mage.glb, boss_kardon.glb)"
   },
   "render_verify": {
-    "command": "render_verify.sh godot_project meteor_render 90 30",
+    "command": "render_verify.sh godot_project /tmp/v120_render 90 30",
     "scene": "res://scenes/meteor_showcase.tscn",
     "frames_captured": 90,
     "duration_sec": 3.0,
-    "wall_time_sec": 5,
-    "cpu_render_sec": 0.03,
-    "cpu_avg_ms_per_frame": 0.29,
+    "wall_time_sec": 11,
+    "cpu_render_sec": 0.15,
+    "cpu_avg_ms_per_frame": 1.68,
     "gpu_render_sec": 2.84,
-    "gpu_avg_ms_per_frame": 31.51,
-    "encoding_sec": 1.13,
-    "encoding_avg_ms_per_frame": 12.51
+    "gpu_avg_ms_per_frame": 31.52,
+    "encoding_sec": 1.12,
+    "encoding_avg_ms_per_frame": 12.39
   },
   "mcp_project_info": {
     "name": "Godot4StudioShowcase",
@@ -28,14 +29,14 @@
     "isDotnet": false,
     "structure": {
       "scenes": 2,
-      "scripts": 5,
-      "assets": 13,
-      "other": 29
+      "scripts": 7,
+      "assets": 14,
+      "other": 40
     }
   },
   "mcp_validate_scripts": {
     "scope": "all",
-    "fileCount": 5,
+    "fileCount": 7,
     "filesWithErrors": 0,
     "allValid": true,
     "results": [
@@ -61,7 +62,21 @@
         "errors": []
       },
       {
+        "scriptPath": "shared/scripts/rigged_actor_3d.gd",
+        "checked": true,
+        "valid": true,
+        "errorCount": 0,
+        "errors": []
+      },
+      {
         "scriptPath": "shared/scripts/squad_skill_runner.gd",
+        "checked": true,
+        "valid": true,
+        "errorCount": 0,
+        "errors": []
+      },
+      {
+        "scriptPath": "shared/scripts/subviewport_stage_bridge.gd",
         "checked": true,
         "valid": true,
         "errorCount": 0,

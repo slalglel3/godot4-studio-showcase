@@ -1,31 +1,29 @@
 extends Node2D
-## Meteor Summon Showcase: Scarlet Archmage casts "멸망의 메테오!!"
-## Phases:
-##   0.00s - 0.90s: Staff orb surge + 2.5D cast zodiac circle + eye cut-in + sky rift + telegraph
-##   0.92s - 1.56s: Magma meteor streaks diagonally from sky rift with aligned flame wake & sparks
-##   1.56s - 3.00s: Crater explosion, screen shockwave, hit-flash knockback, boss gauge drain
+## Meteor Summon 2.5D Rigged Combat Showcase: Scarlet Archmage casts "멸망의 메테오!!"
+## Pairs Blender 4.5 CC0 Skeleton3D actors (scarlet_mage.glb + boss_kardon.glb) inside
+## SubViewportStageBridge with toon cel shaders, bone socket HDR glow tracking, sky portal,
+## lava meteor drop, dual shockwave distortion, and animated Boss counter-slash.
 
 const ADDITIVE_SHADER := preload("res://shared/shaders/vfx_additive_scroll.gdshader")
-const HIT_FLASH_SHADER := preload("res://shared/shaders/vfx_hit_flash.gdshader")
 const CUTIN_TEX := preload("res://assets/sprites/mage_cutin.png")
 const FBM_NOISE := preload("res://shared/textures/noise_fbm.png")
 const VORONOI_NOISE := preload("res://shared/textures/noise_voronoi.png")
 
-const STAFF_TIP_LOCAL := Vector2(92.0, -100.0)
 const SKY_RIFT_POS := Vector2(1130.0, 84.0)
-const IMPACT_POS := Vector2(925.0, 520.0)
+const IMPACT_POS := Vector2(925.0, 505.0)
+const MAGE_WORLD_POS := Vector3(-1.58, 0.0, 0.0)
+const BOSS_WORLD_POS := Vector3(1.36, 0.0, 0.0)
 
 @onready var director: VfxDirector = $VfxDirector
 @onready var boss_hud: BossDualGauge = $HudLayer/BossDualGauge
 
-@onready var mage_sprite: Sprite2D = $Arena/MageRoot/MageSprite
+@onready var stage_bridge: SubViewportStageBridge = $Arena/SubViewportStageBridge
 @onready var cast_plane: Node2D = $Arena/MageRoot/CastPlane
 @onready var mage_zodiac: Sprite2D = $Arena/MageRoot/CastPlane/CastZodiac
-@onready var staff_orb: Sprite2D = $Arena/MageRoot/StaffOrb
-@onready var staff_flare: Sprite2D = $Arena/MageRoot/StaffFlare
+@onready var staff_orb: Sprite2D = $Arena/StaffOrb
+@onready var staff_flare: Sprite2D = $Arena/StaffFlare
 
 @onready var boss_root: Node2D = $Arena/BossRoot
-@onready var boss_sprite: Sprite2D = $Arena/BossRoot/BossSprite
 @onready var telegraph_plane: Node2D = $Arena/TelegraphPlane
 @onready var impact_telegraph: Sprite2D = $Arena/TelegraphPlane/ImpactTelegraph
 @onready var crater_plane: Node2D = $Arena/CraterPlane
@@ -49,65 +47,92 @@ const IMPACT_POS := Vector2(925.0, 520.0)
 @onready var impact_ring: Sprite2D = $ImpactVfx/ImpactRingPlane/ImpactRing
 @onready var impact_sparks: CPUParticles2D = $ImpactVfx/ImpactSparks
 
+var mage_actor: RiggedActor3D
+var boss_actor: RiggedActor3D
 var _t: float = 0.0
 var _cutin_done: bool = false
 var _rift_done: bool = false
+var _heavy_cast_done: bool = false
 var _launch_done: bool = false
 var _impact_done: bool = false
-var _mage_mat: ShaderMaterial
-var _boss_mat: ShaderMaterial
+var _counter_done: bool = false
 
 
 func _ready() -> void:
-	boss_hud.boss_name = "저무는 카르돈 (흑요석의 수호자)"
+	boss_hud.boss_name = "타락한 흑요석 왕 카르돈 (3D Rigged Boss)"
 	boss_hud.max_hp = 10000.0
 	boss_hud.current_hp = 9200.0
 	boss_hud.max_stagger = 1000.0
 	boss_hud.current_stagger = 820.0
 	boss_hud.apply_damage(0.0, 0.0)
 
-	_setup_character_shaders()
+	_setup_rigged_characters()
 	_setup_spell_materials()
 	_reset_initial_vfx_state()
+
+
+func _setup_rigged_characters() -> void:
+	stage_bridge.camera_fov = 30.0
+	stage_bridge.camera_pos = Vector3(0.0, 2.25, 6.2)
+	stage_bridge.camera_look_at = Vector3(0.0, 1.05, 0.0)
+	if stage_bridge.stage_camera != null:
+		stage_bridge.stage_camera.fov = stage_bridge.camera_fov
+		stage_bridge.stage_camera.position = stage_bridge.camera_pos
+		stage_bridge.stage_camera.look_at(stage_bridge.camera_look_at, Vector3.UP)
+
+	mage_actor = stage_bridge.add_rigged_actor(
+		"res://assets/models/scarlet_mage.glb",
+		"ScarletMage3D",
+		MAGE_WORLD_POS,
+		62.0,
+		Color(1.0, 0.45, 0.16, 1.0),
+		1.0
+	)
+	boss_actor = stage_bridge.add_rigged_actor(
+		"res://assets/models/boss_kardon.glb",
+		"BossKardon3D",
+		BOSS_WORLD_POS,
+		-62.0,
+		Color(0.88, 0.25, 1.0, 1.0),
+		1.0
+	)
+	if boss_actor != null:
+		boss_actor.default_idle_clip = "Sword_Idle"
+		boss_actor.play_clip("Sword_Idle", 0.0)
 
 
 func _process(delta: float) -> void:
 	_t += delta
 	_update_continuous_fx(delta)
 
-	if not _cutin_done and _t >= 0.20:
+	if not _cutin_done and _t >= 0.18:
 		_cutin_done = true
+		if mage_actor != null:
+			mage_actor.play_cast_sequence("Spell_Simple_Enter", "Spell_Simple_Idle")
 		director.enqueue_cutin("archmage", "멸망의 메테오!!", CUTIN_TEX, Color(1.0, 0.36, 0.14))
 
-	if not _rift_done and _t >= 0.42:
+	if not _rift_done and _t >= 0.40:
 		_rift_done = true
 		_open_sky_rift_and_telegraph()
 
-	if not _launch_done and _t >= 0.92:
+	# Start 1.75s Cast_Meteor_Heavy at 0.50s so apex occurs ~1.29s and forward slam peaks right at impact (1.58s)
+	if not _heavy_cast_done and _t >= 0.50:
+		_heavy_cast_done = true
+		if mage_actor != null:
+			mage_actor.play_cast_sequence("Cast_Meteor_Heavy", "Idle")
+
+	if not _launch_done and _t >= 0.94:
 		_launch_done = true
 		_launch_meteor()
 
-	if not _impact_done and _t >= 1.56:
+	if not _impact_done and _t >= 1.58:
 		_impact_done = true
 		_trigger_meteor_impact()
 
-
-func _setup_character_shaders() -> void:
-	_mage_mat = ShaderMaterial.new()
-	_mage_mat.shader = HIT_FLASH_SHADER
-	_mage_mat.set_shader_parameter("outline_color", Color(1.0, 0.45, 0.16, 0.9))
-	_mage_mat.set_shader_parameter("outline_width", 2.5)
-	_mage_mat.set_shader_parameter("outline_hdr", 2.2)
-	mage_sprite.material = _mage_mat
-
-	_boss_mat = ShaderMaterial.new()
-	_boss_mat.shader = HIT_FLASH_SHADER
-	_boss_mat.set_shader_parameter("flash_color", Color(1.0, 0.72, 0.38, 1.0))
-	_boss_mat.set_shader_parameter("flash_hdr", 2.6)
-	_boss_mat.set_shader_parameter("outline_color", Color(0.95, 0.25, 0.58, 0.85))
-	_boss_mat.set_shader_parameter("outline_width", 2.2)
-	_boss_mat.set_shader_parameter("outline_hdr", 1.9)
-	boss_sprite.material = _boss_mat
+	if not _counter_done and _t >= 2.18:
+		_counter_done = true
+		if boss_actor != null:
+			boss_actor.play_cast_sequence("Sword_Attack", "Sword_Idle")
 
 
 func _setup_spell_materials() -> void:
@@ -115,10 +140,10 @@ func _setup_spell_materials() -> void:
 		FBM_NOISE, Color(1.0, 0.88, 0.48), Color(1.0, 0.25, 0.08), 2.5, Vector2(0.08, -0.18), 0.025
 	)
 	staff_orb.material = _make_additive_mat(
-		FBM_NOISE, Color(1.0, 0.96, 0.78), Color(1.0, 0.28, 0.10), 3.1, Vector2(0.4, -0.7), 0.04
+		FBM_NOISE, Color(1.0, 0.96, 0.78), Color(1.0, 0.28, 0.10), 2.9, Vector2(0.4, -0.7), 0.04
 	)
 	staff_flare.material = _make_additive_mat(
-		FBM_NOISE, Color(1.0, 0.92, 0.6), Color(1.0, 0.35, 0.08), 2.8, Vector2(0.0, -0.6), 0.02
+		FBM_NOISE, Color(1.0, 0.92, 0.6), Color(1.0, 0.35, 0.08), 2.6, Vector2(0.0, -0.6), 0.02
 	)
 	impact_telegraph.material = _make_additive_mat(
 		FBM_NOISE, Color(1.0, 0.78, 0.38), Color(1.0, 0.16, 0.05), 2.9, Vector2(0.15, 0.2), 0.03
@@ -181,13 +206,13 @@ func _reset_initial_vfx_state() -> void:
 	cast_plane.scale = Vector2(0.25, 0.09)
 	mage_zodiac.modulate.a = 0.0
 	var tw := create_tween().set_parallel(true)
-	tw.tween_property(cast_plane, "scale", Vector2(0.95, 0.34), 0.36).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tw.tween_property(cast_plane, "scale", Vector2(1.05, 0.36), 0.36).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	tw.tween_property(mage_zodiac, "modulate:a", 0.95, 0.25)
 
-	staff_orb.position = STAFF_TIP_LOCAL
-	staff_flare.position = STAFF_TIP_LOCAL
-	staff_orb.scale = Vector2(0.35, 0.35)
-	staff_flare.scale = Vector2(0.28, 0.28)
+	staff_orb.visible = false
+	staff_flare.visible = false
+	staff_orb.scale = Vector2(0.32, 0.32)
+	staff_flare.scale = Vector2(0.26, 0.20)
 
 	sky_rift_root.visible = false
 	telegraph_plane.visible = false
@@ -204,11 +229,26 @@ func _reset_initial_vfx_state() -> void:
 func _update_continuous_fx(delta: float) -> void:
 	mage_zodiac.rotation += delta * 1.15
 	staff_flare.rotation -= delta * 1.9
-	var cast_energy := 1.0 if _t < 1.56 else maxf(0.2, 1.0 - (_t - 1.56) * 0.8)
-	mage_sprite.position.y = sin(_t * 6.5) * 4.5 * cast_energy
-	var orb_pulse := (0.48 + 0.22 * sin(_t * 14.0)) * (1.35 if (_t >= 0.2 and _t <= 1.2) else 0.7)
+
+	# Sync HDR 2D StaffOrb directly to articulated 3D StaffTip bone socket after frame 1 bone evaluation
+	if mage_actor != null and is_instance_valid(mage_actor) and _t >= 0.04:
+		var tip_3d := mage_actor.get_socket_world_pos("StaffTip")
+		var tip_2d := stage_bridge.unproject_to_2d(tip_3d)
+		staff_orb.visible = true
+		staff_flare.visible = true
+		staff_orb.global_position = tip_2d
+		staff_flare.global_position = tip_2d
+
+		var ground_2d := stage_bridge.unproject_to_2d(mage_actor.global_position)
+		$Arena/MageRoot.position = Vector2(ground_2d.x, ground_2d.y - 108.0)
+
+	if boss_actor != null and is_instance_valid(boss_actor) and _t >= 0.04:
+		var b_ground_2d := stage_bridge.unproject_to_2d(boss_actor.global_position)
+		boss_root.position = Vector2(b_ground_2d.x, b_ground_2d.y - 128.0)
+
+	var orb_pulse := (0.42 + 0.16 * sin(_t * 14.0)) * (1.28 if (_t >= 0.2 and _t <= 1.55) else 0.58)
 	staff_orb.scale = Vector2(orb_pulse, orb_pulse)
-	staff_flare.scale = Vector2(orb_pulse * 0.95, orb_pulse * 0.52)
+	staff_flare.scale = Vector2(orb_pulse * 0.90, orb_pulse * 0.48)
 
 	if sky_rift_root.visible:
 		sky_rift_ring.rotation += delta * 1.6
@@ -227,8 +267,11 @@ func _open_sky_rift_and_telegraph() -> void:
 	tw.tween_property(sky_rift_root, "scale", Vector2(1.0, 1.0), 0.35).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	tw.tween_property(sky_rift_root, "modulate:a", 1.0, 0.24)
 
+	var boss_ground := Vector2(IMPACT_POS.x, 588.0)
+	if boss_actor != null:
+		boss_ground = stage_bridge.unproject_to_2d(boss_actor.global_position)
 	telegraph_plane.visible = true
-	telegraph_plane.position = Vector2(IMPACT_POS.x, 588.0)
+	telegraph_plane.position = boss_ground
 	telegraph_plane.scale = Vector2(0.3, 0.1)
 	impact_telegraph.modulate.a = 0.0
 	var tw_tel := create_tween().set_parallel(true)
@@ -241,13 +284,16 @@ func _launch_meteor() -> void:
 	meteor_root.position = SKY_RIFT_POS + Vector2(12.0, -18.0)
 	meteor_root.scale = Vector2(0.68, 0.68)
 
-	# Align horizontal flame wake backward cleanly along trajectory angle
-	var flight_vec := IMPACT_POS - meteor_root.position
+	var target := IMPACT_POS
+	if boss_actor != null:
+		target = stage_bridge.unproject_to_2d(boss_actor.global_position + Vector3(0.0, 0.95, 0.0))
+
+	var flight_vec := target - meteor_root.position
 	wake_container.rotation = flight_vec.angle()
 	meteor_sparks.emitting = true
 
 	var tw := create_tween().set_parallel(true)
-	tw.tween_property(meteor_root, "position", IMPACT_POS, 0.64).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	tw.tween_property(meteor_root, "position", target, 0.64).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 	tw.tween_property(meteor_root, "scale", Vector2(1.18, 1.18), 0.64).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 
 	var tw_fade := create_tween()
@@ -260,20 +306,31 @@ func _trigger_meteor_impact() -> void:
 	meteor_sparks.emitting = false
 	telegraph_plane.visible = false
 
+	var hit_2d := IMPACT_POS
+	var ground_2d := Vector2(IMPACT_POS.x, 588.0)
+	if boss_actor != null:
+		hit_2d = stage_bridge.unproject_to_2d(boss_actor.global_position + Vector3(0.0, 1.0, 0.0))
+		ground_2d = stage_bridge.unproject_to_2d(boss_actor.global_position)
+		boss_actor.trigger_hit_flash(1.0, 0.34, "Hit_Chest")
+		var tw_recoil := create_tween()
+		tw_recoil.tween_property(boss_actor, "position:x", BOSS_WORLD_POS.x + 0.26, 0.09).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		tw_recoil.tween_property(boss_actor, "position:x", BOSS_WORLD_POS.x, 0.42).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
+
 	director.add_trauma(0.88)
-	director.spawn_shockwave(IMPACT_POS, 0.56, 0.055)
+	director.trigger_hitstop(0.05, 0.12)
+	director.spawn_shockwave(hit_2d, 0.56, 0.055)
 	var sw2 := create_tween()
 	sw2.tween_interval(0.08)
 	sw2.tween_callback(func() -> void:
-		director.spawn_shockwave(IMPACT_POS, 0.62, 0.038)
+		director.spawn_shockwave(hit_2d, 0.62, 0.038)
 	)
 
-	impact_sparks.position = IMPACT_POS
+	impact_sparks.position = hit_2d
 	impact_sparks.restart()
 	impact_sparks.emitting = true
 
 	impact_dome.visible = true
-	impact_dome.position = IMPACT_POS
+	impact_dome.position = hit_2d
 	impact_dome.scale = Vector2(0.45, 0.45)
 	impact_dome.modulate.a = 1.0
 	var tw_dome := create_tween().set_parallel(true)
@@ -281,7 +338,7 @@ func _trigger_meteor_impact() -> void:
 	tw_dome.tween_property(impact_dome, "modulate:a", 0.0, 0.58).set_delay(0.14)
 
 	impact_pillar.visible = true
-	impact_pillar.position = IMPACT_POS + Vector2(0.0, -160.0)
+	impact_pillar.position = hit_2d + Vector2(0.0, -160.0)
 	impact_pillar.scale = Vector2(1.55, 0.4)
 	impact_pillar.modulate.a = 1.0
 	var tw_pil := create_tween().set_parallel(true)
@@ -289,7 +346,7 @@ func _trigger_meteor_impact() -> void:
 	tw_pil.tween_property(impact_pillar, "modulate:a", 0.0, 0.68).set_delay(0.18)
 
 	impact_ring_plane.visible = true
-	impact_ring_plane.position = Vector2(IMPACT_POS.x, 588.0)
+	impact_ring_plane.position = ground_2d
 	impact_ring_plane.scale = Vector2(0.45, 0.16)
 	impact_ring.modulate.a = 1.0
 	var tw_ring := create_tween().set_parallel(true)
@@ -297,27 +354,10 @@ func _trigger_meteor_impact() -> void:
 	tw_ring.tween_property(impact_ring, "modulate:a", 0.0, 0.58).set_delay(0.1)
 
 	crater_plane.visible = true
-	crater_plane.position = Vector2(IMPACT_POS.x, 588.0)
+	crater_plane.position = ground_2d
 	crater_plane.scale = Vector2(2.2, 0.72)
 	crater_glow.modulate.a = 0.92
 	var tw_crater := create_tween()
 	tw_crater.tween_property(crater_glow, "modulate:a", 0.24, 1.35)
-
-	_boss_mat.set_shader_parameter("flash_amount", 1.0)
-	var tw_flash := create_tween()
-	tw_flash.tween_method(
-		func(v: float) -> void:
-			_boss_mat.set_shader_parameter("flash_amount", v),
-		1.0, 0.0, 0.28
-	)
-
-	var orig_x := boss_root.position.x
-	var tw_recoil := create_tween()
-	tw_recoil.tween_property(boss_root, "position:x", orig_x + 34.0, 0.09).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-	tw_recoil.tween_property(boss_root, "position:x", orig_x, 0.42).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
-
-	boss_sprite.scale = Vector2(0.39, 0.29)
-	var tw_squash := create_tween()
-	tw_squash.tween_property(boss_sprite, "scale", Vector2(0.34, 0.34), 0.26).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 
 	boss_hud.apply_damage(4350.0, 520.0)
