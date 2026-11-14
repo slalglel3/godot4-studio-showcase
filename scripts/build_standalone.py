@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build a 100% self-contained standalone index.html with all assets inlined as data URIs."""
+"""Build a 100% self-contained standalone index.html for Meteor Summon Showcase."""
 import base64
 import io
 import json
@@ -16,13 +16,19 @@ def b64_file(rel_path: str, mime: str) -> str:
     return f"data:{mime};base64,{encoded}"
 
 
-def b64_webp_from_png(rel_path: str, quality: int = 90) -> str:
+def b64_webp_resized(rel_path: str, max_w: int = 960, quality: int = 86, preserve_alpha: bool = False) -> tuple[str, int, int, str]:
     full = os.path.join(REPO, rel_path)
     buf = io.BytesIO()
     with Image.open(full) as im:
-        im.convert("RGB").save(buf, "WEBP", quality=quality, method=6)
+        orig_w, orig_h = im.size
+        mode = im.mode
+        work = im.convert("RGBA" if preserve_alpha else "RGB")
+        if orig_w > max_w:
+            nh = max(1, int(orig_h * (max_w / orig_w)))
+            work = work.resize((max_w, nh), Image.Resampling.LANCZOS)
+        work.save(buf, "WEBP", quality=quality, method=6)
     encoded = base64.b64encode(buf.getvalue()).decode("ascii")
-    return f"data:image/webp;base64,{encoded}"
+    return f"data:image/webp;base64,{encoded}", orig_w, orig_h, mode
 
 
 def build() -> None:
@@ -30,16 +36,18 @@ def build() -> None:
     read_scene = json.load(open(f"{REPO}/data/read_scene.json", encoding="utf-8"))
 
     source_files = [
-        ("vfx_showcase.gd", "godot_project/scenes/vfx_showcase.gd", "gdscript", "2.5D VFX 테스트 씬 타임라인 (0.2s 컷인, 0.35s 컷인2, 0.72s 슬래시+충격파)"),
-        ("vfx_director.gd", "godot_project/shared/scripts/vfx_director.gd", "gdscript", "히트스톱, 감쇠 트라우마 셰이크, 충격파 레이어 분리, 겹침 방지 컷인 큐"),
+        ("meteor_showcase.gd", "godot_project/scenes/meteor_showcase.gd", "gdscript", "마법사 메테오 소환 시전·낙하·충격파·보스 피격 플래시 메인 타임라인"),
+        ("meteor_showcase.tscn", "godot_project/scenes/meteor_showcase.tscn", "scene", "고딕 흑요석 결투장 + 마법사 + 보스 + 메테오 CPUParticles2D + HDR 씬"),
+        ("vfx_director.gd", "godot_project/shared/scripts/vfx_director.gd", "gdscript", "감쇠 트라우마 셰이크, 충격파 레이어 분리, 겹침 방지 컷인 큐"),
         ("boss_dual_gauge.gd", "godot_project/shared/scripts/boss_dual_gauge.gd", "gdscript", "보스 HP(주황) + 잔상 트레일(아이보리) + 브레이크 게이지(화이트)"),
         ("squad_skill_runner.gd", "godot_project/shared/scripts/squad_skill_runner.gd", "gdscript", "스쿼드 쿨타임·브레이크 사이클 자동 스케줄러"),
         ("vfx_shockwave.gdshader", "godot_project/shared/shaders/vfx_shockwave.gdshader", "shader", "hint_screen_texture 기반 방사형 왜곡 + 색수차 충격파 셰이더"),
-        ("vfx_additive_scroll.gdshader", "godot_project/shared/shaders/vfx_additive_scroll.gdshader", "shader", "HDR Emissive Bloom + UV 스크롤 가산 혼합 마법진/기둥/검기"),
-        ("vfx_dissolve_curse.gdshader", "godot_project/shared/shaders/vfx_dissolve_curse.gdshader", "shader", "노이즈 디졸브 + 글리치 + 보라색 저주 테두리 발광"),
-        ("vfx_hit_flash.gdshader", "godot_project/shared/shaders/vfx_hit_flash.gdshader", "shader", "피격 순간 백색/발광 플래시 셰이더"),
+        ("vfx_additive_scroll.gdshader", "godot_project/shared/shaders/vfx_additive_scroll.gdshader", "shader", "HDR Emissive Bloom + UV 스크롤 가산 혼합 불꽃/마법진/꼬리"),
+        ("vfx_hit_flash.gdshader", "godot_project/shared/shaders/vfx_hit_flash.gdshader", "shader", "캐릭터 림 아웃라인(마법사 시전) + 보스 피격 백색/황금 플래시"),
+        ("vfx_dissolve_curse.gdshader", "godot_project/shared/shaders/vfx_dissolve_curse.gdshader", "shader", "노이즈 디졸브 + 글리치 + 보라색 저주 오라 셰이더"),
         ("ui_cutin_banner.gdshader", "godot_project/shared/shaders/ui_cutin_banner.gdshader", "shader", "사선 클리핑 평행사변형 스킬 컷인 배너 셰이더"),
-        ("vfx_showcase.tscn", "godot_project/scenes/vfx_showcase.tscn", "scene", "Forward+ HDR WorldEnvironment + ShockwaveLayer(1) + HudLayer(10)"),
+        ("vfx_showcase.gd", "godot_project/scenes/vfx_showcase.gd", "gdscript", "베이스라인 셰이더/컷인 테스트 씬 스크립트"),
+        ("vfx_showcase.tscn", "godot_project/scenes/vfx_showcase.tscn", "scene", "베이스라인 셰이더/컷인 테스트 씬"),
     ]
     sources = []
     for name, rel_path, kind, desc in source_files:
@@ -52,11 +60,32 @@ def build() -> None:
                 "content": f.read(),
             })
 
+    custom_asset_specs = [
+        ("mage_caster.png", "godot_project/assets/sprites/mage_caster.png", True, "홍염 대마법사 (Side-View Battle Sprite + clean_cutout.py)"),
+        ("mage_cutin.png", "godot_project/assets/sprites/mage_cutin.png", False, "스킬 컷인 배너 일러스트 ('멸망의 메테오!!')"),
+        ("boss_kardon.png", "godot_project/assets/sprites/boss_kardon.png", True, "저무는 카르돈 보스 스프라이트 (clean_cutout.py)"),
+        ("meteor_rock.png", "godot_project/assets/sprites/meteor_rock.png", True, "용암 균열 화산 운석 본체 (clean_cutout.py)"),
+        ("arena_bg.png", "godot_project/assets/textures/arena_bg.png", False, "고딕 흑요석 결투장 2.5D 배경 (1280×720)"),
+    ]
+    custom_sprites = []
+    for name, rel_path, has_alpha, desc in custom_asset_specs:
+        uri, ow, oh, mode = b64_webp_resized(rel_path, max_w=540, quality=88, preserve_alpha=has_alpha)
+        custom_sprites.append({
+            "name": name,
+            "path": rel_path,
+            "width": ow,
+            "height": oh,
+            "mode": mode,
+            "bytes": os.path.getsize(os.path.join(REPO, rel_path)),
+            "desc": desc,
+            "dataUri": uri,
+        })
+
     tex_meta = {
         "noise_fbm.png": "심리스 FBM 노이즈 (스크롤/왜곡)",
-        "noise_voronoi.png": "보로노이 셀 노이즈 (불기둥/균열)",
+        "noise_voronoi.png": "보로노이 셀 노이즈 (불꽃/용암 균열)",
         "glow_radial.png": "방사형 HDR 코어 글로우",
-        "spark_streak.png": "이방성 스파크 스트릭",
+        "spark_streak.png": "이방성 스파크 & 혜성 꼬리",
         "slash_arc.png": "테이퍼드 크림슨 검기 아크",
         "magic_zodiac.png": "12섹터 성좌 마법진 링",
         "smoke_puff.png": "카툰 연기 퍼프 알파 마스크",
@@ -82,29 +111,32 @@ def build() -> None:
         })
 
     frames_meta = [
-        ("f_0001.png", 1, 0.00, "초기 상태 — HDR 마법진(시안) · 황금 불기둥 · 저주 오라 · 보스 듀얼 게이지(8500/10000)"),
-        ("f_0007.png", 7, 0.20, "0.20s — Left 슬롯 컷인 발동: 랜서 '성창의 가호!!' 슬라이드 인"),
-        ("f_0012.png", 12, 0.37, "0.37s — Right 슬롯 컷인 동시 발동: 로즈 퀸 '마지막 왈츠!!' (좌/우 겹침 0%)"),
-        ("f_0018.png", 18, 0.57, "0.57s — 양측 사선 컷인 배너 유지 + 마법진 회전 & 보로노이 불기둥 상승"),
-        ("f_0022.png", 22, 0.70, "0.70s — 슬래시/충격파 직전 임계 프레임"),
-        ("f_0024.png", 24, 0.77, "0.77s — 검기(SlashArc) + 스크린 왜곡 충격파(Shockwave) + 보스 HP(-1400)·브레이크(-180) 직격"),
-        ("f_0027.png", 27, 0.87, "0.87s — 충격파 링 외곽 확산 (HudLayer 레이어 분리로 UI 왜곡 없음) + 카메라 트라우마"),
-        ("f_0030.png", 30, 0.97, "0.97s — 충격파 소멸 단계 + 검기 잔광 페이드아웃"),
-        ("f_0036.png", 36, 1.17, "1.17s — 보스 HP 아이보리 잔상(Trailing Ghost) 드레인 진행 + 컷인 퇴장 시작"),
-        ("f_0042.png", 42, 1.37, "1.37s — 컷인 슬롯 복귀 및 게이지 안정화"),
-        ("f_0048.png", 48, 1.57, "1.57s — 타격 후 정착 프레임 (HP 7100/10000 반영 완료)"),
-        ("f_0054.png", 54, 1.77, "1.77s — 지속 셰이더 루프 검증 (마법진 회전 + HDR 글로우)"),
-        ("f_0060.png", 60, 1.97, "1.97s — 60프레임 캡처 종료 (무오류 완결)"),
+        ("f_0001.png", 1, 0.00, "0.00s — 대치 개시: 홍염 대마법사 vs 저무는 카르돈 (흑요석의 수호자)"),
+        ("f_0007.png", 7, 0.20, "0.20s — 영창 개시: 마법사 발밑 2.5D 마법진 전개 + 지팡이 루비 코어 점화 + 컷인 진입"),
+        ("f_0014.png", 14, 0.43, "0.43s — 상공 소환 포탈(Sky Rift) 개방 시작 + 보스 발밑 메테오 낙하지점 전조(Telegraph)"),
+        ("f_0020.png", 20, 0.63, "0.63s — '멸망의 메테오!!' 아이 컷인 고정 + 하늘 마법진 & 타겟 링 가속"),
+        ("f_0028.png", 28, 0.90, "0.90s — 메테오 발사 직전 최대 영창 에너지 집중"),
+        ("f_0034.png", 34, 1.10, "1.10s — 상공 포탈에서 거대 용암 운석(MeteorRock) 출현 + 혜성 화염 꼬리 생성"),
+        ("f_0038.png", 38, 1.23, "1.23s — 대각선 궤적을 따라 가속 강하 + HDR 화염 꼬리 & 불꽃 파티클(42 sparks) 비산"),
+        ("f_0042.png", 42, 1.37, "1.37s — 보스 두상 직상방 강하 돌입 (낙하 스케일 확대 연출)"),
+        ("f_0046.png", 46, 1.50, "1.50s — 타격 60ms 직전 초고속 낙하 임계 프레임"),
+        ("f_0049.png", 49, 1.60, "1.60s — 메테오 직격! 보스 백색/황금 Hit-Flash + 1차 색수차 스크린 충격파(UI 미왜곡)"),
+        ("f_0052.png", 52, 1.70, "1.70s — 2차 충격파 확산 + 용암 화염 기둥/폭발 돔 팽창 + 보스 넉백 리코일"),
+        ("f_0056.png", 56, 1.83, "1.83s — 보스 HP 대폭 차감(-4350 HP / -520 Stagger) + 56개 방사형 스파크 분출"),
+        ("f_0064.png", 64, 2.10, "2.10s — 폭발 여파 소강 & 보스 게이지 아이보리 잔상(Trailing Ghost) 드레인"),
+        ("f_0076.png", 76, 2.50, "2.50s — 바닥 용암 크레이터 작열 잔광 유지 & 보스 스탠스 복귀"),
+        ("f_0090.png", 90, 2.97, "2.97s — 90프레임(3.00s) 무오류 완결"),
     ]
     frames = []
     for fn, num, sec, caption in frames_meta:
+        uri, _, _, _ = b64_webp_resized(f"assets/frames/{fn}", max_w=960, quality=84, preserve_alpha=False)
         frames.append({
             "name": fn,
             "path": f"assets/frames/{fn}",
             "frame": num,
             "timeSec": sec,
             "caption": caption,
-            "dataUri": b64_webp_from_png(f"assets/frames/{fn}", quality=90),
+            "dataUri": uri,
         })
 
     bundle = {
@@ -112,6 +144,7 @@ def build() -> None:
         "report": report,
         "read_scene": read_scene,
         "sources": sources,
+        "customSprites": custom_sprites,
         "textures": textures,
         "frames": frames,
         "media": {
@@ -128,7 +161,7 @@ def build() -> None:
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Godot 4 Game Studio — Standalone Verification Showcase</title>
+  <title>Godot 4 Game Studio — Meteor Summon &amp; VFX Showcase (v1.1.0)</title>
   <style>
     :root {{
       --bg: #0a0c12;
@@ -152,8 +185,8 @@ def build() -> None:
       margin: 0;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans KR", Roboto, sans-serif;
       background:
-        radial-gradient(1200px 600px at 15% -10%, rgba(62, 224, 255, 0.10), transparent 60%),
-        radial-gradient(900px 500px at 88% 5%, rgba(255, 77, 109, 0.10), transparent 55%),
+        radial-gradient(1200px 600px at 15% -10%, rgba(255, 77, 109, 0.12), transparent 60%),
+        radial-gradient(900px 500px at 88% 5%, rgba(255, 202, 87, 0.10), transparent 55%),
         var(--bg);
       color: var(--text);
       line-height: 1.58;
@@ -176,15 +209,15 @@ def build() -> None:
       position: absolute;
       inset: 0 0 auto 0;
       height: 3px;
-      background: linear-gradient(90deg, var(--cyan), var(--gold), var(--crimson), var(--violet));
+      background: linear-gradient(90deg, var(--crimson), var(--gold), var(--cyan), var(--violet));
     }}
     .eyebrow {{
       display: inline-flex; align-items: center; gap: 8px;
       font-size: 12px; font-weight: 700; letter-spacing: 0.08em;
-      text-transform: uppercase; color: var(--cyan); margin-bottom: 8px;
+      text-transform: uppercase; color: var(--gold); margin-bottom: 8px;
     }}
     h1 {{ margin: 0 0 8px; font-size: clamp(22px, 3.2vw, 34px); line-height: 1.2; letter-spacing: -0.02em; }}
-    .subtitle {{ margin: 0; color: var(--muted); font-size: 14.5px; max-width: 820px; }}
+    .subtitle {{ margin: 0; color: var(--muted); font-size: 14.5px; max-width: 840px; }}
     .badge-row {{ display: flex; flex-wrap: wrap; gap: 8px; margin-top: 16px; }}
     .badge {{
       display: inline-flex; align-items: center; gap: 6px; padding: 5px 11px;
@@ -199,10 +232,10 @@ def build() -> None:
       border-top: 1px solid rgba(255,255,255,0.06);
     }}
     .nav-pills a {{
-      padding: 7px 12px; border-radius: 9px; background: rgba(62, 224, 255, 0.08);
-      border: 1px solid rgba(62, 224, 255, 0.22); color: var(--text); font-size: 13px; font-weight: 600;
+      padding: 7px 12px; border-radius: 9px; background: rgba(255, 202, 87, 0.09);
+      border: 1px solid rgba(255, 202, 87, 0.24); color: var(--text); font-size: 13px; font-weight: 600;
     }}
-    .nav-pills a:hover {{ text-decoration: none; background: rgba(62, 224, 255, 0.16); border-color: var(--cyan); }}
+    .nav-pills a:hover {{ text-decoration: none; background: rgba(255, 202, 87, 0.18); border-color: var(--gold); }}
     section {{ margin-top: 28px; }}
     .section-head {{ display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 10px; margin-bottom: 12px; }}
     .section-head h2 {{ margin: 0; font-size: 19px; letter-spacing: -0.01em; }}
@@ -234,19 +267,19 @@ def build() -> None:
       color: var(--text); padding: 7px 11px; border-radius: 8px; font-size: 12.5px;
       font-weight: 600; cursor: pointer; touch-action: manipulation;
     }}
-    button.btn:hover {{ border-color: var(--cyan); background: rgba(62, 224, 255, 0.12); }}
-    button.btn.active {{ border-color: var(--cyan); background: rgba(62, 224, 255, 0.22); color: #fff; }}
+    button.btn:hover {{ border-color: var(--gold); background: rgba(255, 202, 87, 0.12); }}
+    button.btn.active {{ border-color: var(--gold); background: rgba(255, 202, 87, 0.22); color: #fff; }}
     .scrubber-box {{ margin-top: 12px; padding: 12px; background: var(--bg-elev); border: 1px solid var(--border); border-radius: 10px; }}
-    input[type="range"] {{ width: 100%; accent-color: var(--cyan); cursor: pointer; }}
+    input[type="range"] {{ width: 100%; accent-color: var(--gold); cursor: pointer; }}
     .frame-caption {{ margin-top: 8px; font-size: 13px; color: var(--text); display: flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; }}
     .frame-tag {{ font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; color: var(--gold); font-weight: 700; }}
     .jump-pills {{ display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }}
     .contact-sheet-img {{ width: 100%; border-radius: 10px; border: 1px solid var(--border); cursor: zoom-in; display: block; }}
-    .tex-grid {{ display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 12px; }}
+    .tex-grid {{ display: grid; grid-template-columns: repeat(auto-fill, minmax(215px, 1fr)); gap: 12px; }}
     .tex-card {{ background: var(--bg-elev); border: 1px solid var(--border); border-radius: 12px; padding: 12px; display: flex; flex-direction: column; gap: 8px; }}
     .tex-preview {{
-      height: 144px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.08);
-      display: flex; align-items: center; justify-content: center; padding: 10px; background: #0d0a10; overflow: hidden;
+      height: 156px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.08);
+      display: flex; align-items: center; justify-content: center; padding: 8px; background: #0d0a10; overflow: hidden;
     }}
     .tex-preview.checker {{
       background-color: #1f2430;
@@ -259,7 +292,7 @@ def build() -> None:
       background-position: 0 0, 0 10px, 10px -10px, -10px 0;
     }}
     .tex-preview img {{ max-width: 100%; max-height: 100%; object-fit: contain; }}
-    .tex-name {{ font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 13px; font-weight: 700; color: var(--cyan); }}
+    .tex-name {{ font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 13px; font-weight: 700; color: var(--gold); }}
     .tex-meta {{ font-size: 12px; color: var(--muted); }}
     .table-wrap {{ overflow-x: auto; }}
     table {{ width: 100%; border-collapse: collapse; font-size: 13px; }}
@@ -303,19 +336,19 @@ def build() -> None:
     <div id="fatalError" class="error-banner hidden"></div>
 
     <header class="hero">
-      <div class="eyebrow">Godot 4 Game Studio · Self-Contained Verification Report</div>
-      <h1>Godot 4.7.2 + MCP VFX Pipeline Verification</h1>
+      <div class="eyebrow">Godot 4 Game Studio · Meteor Summon Combat Showcase (v1.1.0)</div>
+      <h1>홍염 대마법사 — '멸망의 메테오!!' 스킬 &amp; 운석 낙하 검증 리포트</h1>
       <p class="subtitle">
-        전역 스킬 <code class="inline">godot4-game-studio</code>로 신규 프로젝트(<code class="inline">Godot4StudioShowcase</code>)를 스캐폴딩한 뒤,
-        <code class="inline">godot-mcp</code>(157개 도구) 정적 검증과 <code class="inline">godot-xvfb-run</code> Vulkan Forward+ MovieMaker 렌더링(60프레임 @ 30fps)을 End-to-End 실행·검증한 <strong>오프라인/모바일 단일 파일 호환</strong> 리포트입니다.
+        신규 생성한 마법사(<code class="inline">mage_caster.png</code>)·컷인(<code class="inline">mage_cutin.png</code>)·보스(<code class="inline">boss_kardon.png</code>)·화산 운석(<code class="inline">meteor_rock.png</code>)·결투장(<code class="inline">arena_bg.png</code>) 에셋을 Godot 4.7.2 <code class="inline">Forward+</code> HDR 씬(<code class="inline">meteor_showcase.tscn</code>)으로 통합해 90프레임(3.00s) 시전→상공 소환→운석 낙하→대폭발 충격파를 렌더링 검증한 <strong>모바일/오프라인 단일 파일</strong> 리포트입니다.
       </p>
       <div class="badge-row" id="heroBadges"></div>
       <nav class="nav-pills">
-        <a href="#sec-render">1. 렌더 영상 &amp; 프레임</a>
-        <a href="#sec-sheet">2. 컨택트 시트</a>
-        <a href="#sec-mcp">3. MCP &amp; WSL2 결과</a>
-        <a href="#sec-textures">4. VFX 텍스처 (8종)</a>
-        <a href="#sec-code">5. 셰이더 &amp; GDScript</a>
+        <a href="#sec-render">1. 메테오 영상 &amp; 타임라인</a>
+        <a href="#sec-sheet">2. 6-Frame QA 시트</a>
+        <a href="#sec-sprites">3. 생성 캐릭터 · 운석 · 배경 (5종)</a>
+        <a href="#sec-mcp">4. MCP &amp; 렌더 검증 결과</a>
+        <a href="#sec-textures">5. 절차적 VFX 텍스처 (8종)</a>
+        <a href="#sec-code">6. 셰이더 &amp; GDScript 소스</a>
       </nav>
     </header>
 
@@ -325,8 +358,8 @@ def build() -> None:
 
     <section id="sec-render">
       <div class="section-head">
-        <h2>1. MovieMaker 렌더 영상 &amp; 프레임별 타임라인 검증</h2>
-        <p class="section-desc">2.00초(60프레임 @ 30fps, 1280×720, Vulkan 1.4.335 llvmpipe Forward+)</p>
+        <h2>1. 메테오 소환 &amp; 운석 낙하 렌더 영상 + 프레임 스크러버</h2>
+        <p class="section-desc">3.00초(90프레임 @ 30fps, 1280×720, Vulkan 1.4.335 llvmpipe Forward+)</p>
       </div>
       <div class="media-grid">
         <div class="card">
@@ -337,16 +370,16 @@ def build() -> None:
           <div class="toolbar">
             <div class="btn-group">
               <button class="btn active" id="btnModeMp4" type="button">MP4 영상</button>
-              <button class="btn" id="btnModeWebp" type="button">WebP 애니메이션 (모바일 호환)</button>
+              <button class="btn" id="btnModeWebp" type="button">WebP 루프 (모바일)</button>
               <button class="btn" id="btnPlayToggle" type="button">재생/정지</button>
               <button class="btn speed-btn" data-speed="0.25" type="button">0.25x</button>
               <button class="btn speed-btn" data-speed="0.5" type="button">0.5x</button>
               <button class="btn speed-btn active" data-speed="1" type="button">1.0x</button>
             </div>
-            <span class="tex-meta" id="videoTimeLabel">0.00s / 2.00s</span>
+            <span class="tex-meta" id="videoTimeLabel">0.00s / 3.00s</span>
           </div>
           <p class="tex-meta" style="margin: 10px 0 0;">
-            ※ <strong>핵심 확인 포인트</strong>: 0.20s·0.35s 연속 컷인 좌/우 슬롯 겹침 없음, 0.72s 충격파가 <code class="inline">ShockwaveLayer(layer 1)</code>에서만 왜곡되어 상단 보스 게이지(<code class="inline">HudLayer(layer 10)</code>) 및 컷인 텍스트가 찌그러지지 않음. (모바일 뷰어에서 MP4가 차단되면 자동으로 WebP 루프로 전환됩니다.)
+            ※ <strong>연출 타임라인</strong>: 0.20s 아이 컷인(<code class="inline">멸망의 메테오!!</code>) → 0.42s 상공 포탈 + 바닥 2.5D 전조 → 0.92s 화산 운석 대각선 강하 → 1.56s 대폭발 기둥·스크린 충격파(HUD 미왜곡)·보스 히트 플래시 &amp; -4,350 HP 타격.
           </p>
         </div>
 
@@ -355,14 +388,14 @@ def build() -> None:
             <img id="framePreview" alt="Selected Godot keyframe" style="cursor: zoom-in;" />
           </div>
           <div class="scrubber-box">
-            <input id="frameSlider" type="range" min="0" max="12" value="5" />
+            <input id="frameSlider" type="range" min="0" max="14" value="6" />
             <div class="frame-caption">
-              <span class="frame-tag" id="frameTag">f024 · 0.77s</span>
+              <span class="frame-tag" id="frameTag">f038 · 1.23s</span>
               <span id="frameText">로딩 중...</span>
             </div>
             <div class="toolbar" style="margin-top: 8px;">
               <button class="btn" id="btnAutoFrames" type="button">▶ 키프레임 슬라이드 재생</button>
-              <span class="tex-meta">슬라이더 또는 버튼으로 구간별 검수</span>
+              <span class="tex-meta">슬라이더/버튼으로 메테오 궤적·폭발 정밀 검수</span>
             </div>
             <div class="jump-pills" id="jumpPills"></div>
           </div>
@@ -372,64 +405,72 @@ def build() -> None:
 
     <section id="sec-sheet">
       <div class="section-head">
-        <h2>2. 자동 생성 6-Frame 검증 컨택트 시트</h2>
-        <p class="section-desc"><code class="inline">render_verify.sh</code>가 프레임 캡처 직후 생성한 시각 QA 시트 (클릭 시 확대)</p>
+        <h2>2. 자동 생성 6-Frame QA 컨택트 시트</h2>
+        <p class="section-desc"><code class="inline">render_verify.sh</code>가 90프레임 캡처 직후 생성한 시각 검증 시트 (클릭 시 확대)</p>
       </div>
       <div class="card">
-        <img id="contactSheetImg" class="contact-sheet-img" alt="6-frame verification contact sheet" />
+        <img id="contactSheetImg" class="contact-sheet-img" alt="6-frame meteor verification contact sheet" />
       </div>
+    </section>
+
+    <section id="sec-sprites">
+      <div class="section-head">
+        <h2>3. 신규 생성 2D 캐릭터 · 운석 · 컷인 · 배경 에셋 (5종)</h2>
+        <div><button class="btn" id="btnToggleSpriteChecker" type="button">체커보드 투명 배경 토글</button></div>
+      </div>
+      <div class="tex-grid" id="spriteGrid"></div>
     </section>
 
     <section id="sec-mcp">
       <div class="section-head">
-        <h2>3. MCP 정적/씬 검증 &amp; WSL2 격리 Xvfb 파이프라인 결과</h2>
-        <p class="section-desc">실제 <code class="inline">godot</code> MCP 서버 호출 결과 및 구축 과정에서 발견·해결한 WSL2 이슈 요약</p>
+        <h2>4. MCP 정적/씬 검증 &amp; MovieMaker 렌더 텔레메트리</h2>
+        <p class="section-desc">씬 및 스크립트 수정 후 재실행한 최종 검증 데이터</p>
       </div>
       <div class="card">
         <div class="table-wrap">
           <table>
             <thead>
               <tr>
-                <th>검증 계층</th>
+                <th>검증 항목</th>
                 <th>실행 도구 / 명령</th>
                 <th>관측 결과</th>
-                <th>핵심 해결 내역 (테스트 중 발견)</th>
+                <th>주요 검증 포인트</th>
               </tr>
             </thead>
             <tbody>
               <tr>
-                <td><strong>1. 프로젝트 스캐폴딩 &amp; 리소스 임포트</strong></td>
-                <td><code class="inline">scaffold_godot_project.sh</code></td>
-                <td><span style="color:var(--green);font-weight:700;">PASS</span> · 8 textures / 5 shaders / 4 scripts / 1 scene</td>
-                <td>초기 빈 프로젝트에서 <code class="inline">.godot/imported/</code> 미생성으로 인한 <code class="inline">No loader found for .png</code> 및 전역 클래스 미인식을 발견 → <code class="inline">--headless --import --quit</code> 자동화 패치 후 재검증 완료</td>
+                <td><strong>1. 에셋 생성 &amp; 경량 알파 컷아웃</strong></td>
+                <td><code class="inline">image-generator</code> + <code class="inline">clean_cutout.py</code></td>
+                <td><span style="color:var(--green);font-weight:700;">PASS</span> · 5종 스프라이트/배경</td>
+                <td>Pillow/NumPy 기반 CPU 경량 컷아웃(PyTorch/rembg 미사용)으로 마법사·보스·메테오 알파 외곽선 깔끔 추출</td>
               </tr>
               <tr>
-                <td><strong>2. Godot MCP 정적/타입 검사</strong></td>
+                <td><strong>2. Godot MCP 정적/타입 검증</strong></td>
                 <td><code class="inline">godot:validate_scripts (scope="all")</code></td>
-                <td><span style="color:var(--green);font-weight:700;">PASS</span> · 4/4 files (<code class="inline">filesWithErrors: 0</code>)</td>
-                <td>WSL2 <code class="inline">DISPLAY=:0</code> 소켓 대기 행(30s hang)을 <code class="inline">mcp_config.json</code>에서 <code class="inline">DISPLAY</code> 제거로 차단하여 <code class="inline">&lt;1s</code> 응답 달성</td>
+                <td><span style="color:var(--green);font-weight:700;">PASS</span> · 5/5 files (<code class="inline">filesWithErrors: 0</code>)</td>
+                <td>신규 <code class="inline">scenes/meteor_showcase.gd</code> 포함 전체 5개 GDScript 파싱/타입 오류 0건</td>
               </tr>
               <tr>
-                <td><strong>3. 씬 트리 &amp; 메타데이터 파싱</strong></td>
-                <td><code class="inline">godot:read_scene</code> · <code class="inline">godot:get_project_info</code></td>
-                <td><span style="color:var(--green);font-weight:700;">PASS</span> · <code class="inline">VfxShowcase</code> (Forward+, 4.7.2.stable)</td>
-                <td><code class="inline">WorldEnvironment(HDR Glow 0.95)</code> + <code class="inline">ShockwaveLayer(1)</code> + <code class="inline">HudLayer(10)</code> 트리 검증 완료</td>
+                <td><strong>3. 씬 트리 &amp; 2.5D 원근 검증</strong></td>
+                <td><code class="inline">godot:read_scene("scenes/meteor_showcase.tscn")</code></td>
+                <td><span style="color:var(--green);font-weight:700;">PASS</span> · <code class="inline">MeteorShowcase</code></td>
+                <td>2.5D 바닥 마법진(<code class="inline">CastPlane</code>/<code class="inline">TelegraphPlane</code>) 부모 스케일 분리를 통해 타원 원근 회전 정상화</td>
               </tr>
               <tr>
-                <td><strong>4. 그래픽 렌더링 &amp; 프레임 QA</strong></td>
-                <td><code class="inline">render_verify.sh ... 60 30</code> (<code class="inline">godot-xvfb-run</code>)</td>
-                <td><span style="color:var(--green);font-weight:700;">PASS</span> · 60 frames in 3s (CPU 0.60ms / GPU 30.42ms)</td>
-                <td>WSLg Weston 주기적 Segfault(signal 11)로부터 독립된 사용자 영역 <code class="inline">bubblewrap + Xvfb</code>로 안정 캡처</td>
+                <td><strong>4. MovieMaker 90프레임 렌더링</strong></td>
+                <td><code class="inline">render_verify.sh ... 90 30</code> (<code class="inline">godot-xvfb-run</code>)</td>
+                <td><span style="color:var(--green);font-weight:700;">PASS</span> · 90 frames in 5s (CPU 0.29ms / GPU 31.51ms)</td>
+                <td><code class="inline">f038</code> 운석 강하 궤적 정렬, <code class="inline">f049</code> 충격파·히트플래시·보스 게이지 차감 프레임 육안 검증 완료</td>
               </tr>
             </tbody>
           </table>
         </div>
         <details class="json-box">
-          <summary>MCP <code class="inline">validate_scripts</code> &amp; <code class="inline">get_project_info</code> 실제 반환 JSON 보기</summary>
+          <summary>MCP <code class="inline">validate_scripts</code> &amp; <code class="inline">get_project_info</code> &amp; <code class="inline">render_verify</code> 실제 JSON 보기</summary>
           <pre id="mcpJsonPre"></pre>
         </details>
         <details class="json-box">
-          <summary>MCP <code class="inline">read_scene("scenes/vfx_showcase.tscn")</code> 노드 트리 JSON 보기</summary>
+          <summary>MCP <code class="inline">read_scene("scenes/meteor_showcase.tscn")</code> 노드 트리 JSON 보기</summary>
           <pre id="sceneJsonPre"></pre>
         </details>
       </div>
@@ -437,7 +478,7 @@ def build() -> None:
 
     <section id="sec-textures">
       <div class="section-head">
-        <h2>4. 절차적 VFX 텍스처 아틀라스 (8종)</h2>
+        <h2>5. 공용 절차적 VFX 텍스처 아틀라스 (8종)</h2>
         <div><button class="btn" id="btnToggleChecker" type="button">체커보드 투명 배경 토글</button></div>
       </div>
       <div class="tex-grid" id="texGrid"></div>
@@ -445,8 +486,8 @@ def build() -> None:
 
     <section id="sec-code">
       <div class="section-head">
-        <h2>5. 검증된 Godot 4 셰이더 &amp; GDScript 소스 코드</h2>
-        <p class="section-desc">실제 프로젝트에 포함되어 컴파일·렌더링 검증을 통과한 원본 소스</p>
+        <h2>6. 검증된 Godot 4 셰이더 &amp; GDScript 소스 코드</h2>
+        <p class="section-desc">메테오 연출 씬 및 공용 파이프라인 전체 12개 파일</p>
       </div>
       <div class="card">
         <div class="tabs" id="sourceTabs"></div>
@@ -462,7 +503,7 @@ def build() -> None:
 
     <footer>
       <div>Repository: <a href="https://github.com/slalglel3/godot4-studio-showcase" target="_blank" rel="noopener">github.com/slalglel3/godot4-studio-showcase</a></div>
-      <div>Toolchain: Godot 4.7.2-stable · godot-mcp v3.1.0 (157 tools) · Bubblewrap Xvfb + Vulkan llvmpipe</div>
+      <div>Release v1.1.0 · Godot 4.7.2-stable · godot-mcp v3.1.0 (157 tools) · Bubblewrap Xvfb + Vulkan llvmpipe</div>
     </footer>
   </div>
 
@@ -483,10 +524,10 @@ def build() -> None:
         const val = rep.mcp_validate_scripts;
 
         const badges = [
-          {{ text: "Standalone Single-File HTML (Offline Ready)", cls: "" }},
+          {{ text: "v1.1.0 Meteor Summon Standalone HTML", cls: "gold" }},
           {{ text: "Godot " + env.godot_version, cls: "cyan" }},
           {{ text: env.renderer, cls: "cyan" }},
-          {{ text: env.mcp_server, cls: "gold" }},
+          {{ text: env.mcp_server, cls: "" }},
           {{ text: `GDScript ${{val.fileCount}}/${{val.fileCount}} Valid (0 Errors)`, cls: "" }},
           {{ text: `MovieMaker ${{rv.frames_captured}}f @ ${{env.fps}}fps (${{rv.wall_time_sec}}s)`, cls: "gold" }}
         ];
@@ -502,10 +543,10 @@ def build() -> None:
         }});
 
         const kpis = [
-          {{ label: "Godot Engine", value: "4.7.2-stable", cls: "cyan", sub: "Forward+ HDR Glow (Threshold 0.95)" }},
+          {{ label: "Skill Showcase", value: "멸망의 메테오!!", cls: "gold", sub: "홍염 대마법사 시전 → 상공 포탈 운석 강하 · 대폭발" }},
           {{ label: "MCP Static Check", value: `${{val.fileCount}} / ${{val.fileCount}} PASS`, cls: "ok", sub: `Errors: ${{val.filesWithErrors}} (godot:validate_scripts)` }},
-          {{ label: "MovieMaker Render", value: `${{rv.frames_captured}}f in ${{rv.wall_time_sec}}s`, cls: "gold", sub: `CPU ${{rv.cpu_avg_ms_per_frame.toFixed(2)}}ms · GPU ${{rv.gpu_avg_ms_per_frame.toFixed(2)}}ms / frame` }},
-          {{ label: "Assets & Shaders", value: `${{rep.mcp_project_info.structure.assets}} PNG / 5 Shader`, cls: "", sub: "Shockwave · Additive · Dissolve · Flash · Cut-in" }}
+          {{ label: "MovieMaker Render", value: `${{rv.frames_captured}}f (${{rv.duration_sec.toFixed(1)}}s) in ${{rv.wall_time_sec}}s`, cls: "cyan", sub: `CPU ${{rv.cpu_avg_ms_per_frame.toFixed(2)}}ms · GPU ${{rv.gpu_avg_ms_per_frame.toFixed(2)}}ms / frame` }},
+          {{ label: "Custom + VFX Assets", value: `${{data.customSprites.length}} Sprites / ${{data.textures.length}} VFX`, cls: "", sub: "5 Shaders + 2 CPUParticles2D + Shockwave" }}
         ];
         const kpiGrid = document.getElementById("kpiGrid");
         kpis.forEach(k => {{
@@ -534,9 +575,7 @@ def build() -> None:
           webp.classList.toggle("hidden", !useWebp);
           btnModeMp4.classList.toggle("active", !useWebp);
           btnModeWebp.classList.toggle("active", useWebp);
-          if (useWebp) {{
-            timeLbl.textContent = "WebP 루프 (24fps · 2.00s)";
-          }}
+          if (useWebp) timeLbl.textContent = "WebP 루프 (18fps · 3.00s)";
         }}
         btnModeMp4.addEventListener("click", () => setPlaybackMode("mp4"));
         btnModeWebp.addEventListener("click", () => setPlaybackMode("webp"));
@@ -557,11 +596,11 @@ def build() -> None:
           }});
         }});
         video.addEventListener("timeupdate", () => {{
-          const dur = Number.isFinite(video.duration) ? video.duration : 2.0;
+          const dur = Number.isFinite(video.duration) ? video.duration : 3.0;
           timeLbl.textContent = `${{video.currentTime.toFixed(2)}}s / ${{dur.toFixed(2)}}s`;
         }});
 
-        // Frame scrubber + auto-slideshow
+        // Frame scrubber
         const frames = data.frames;
         const slider = document.getElementById("frameSlider");
         const preview = document.getElementById("framePreview");
@@ -570,7 +609,7 @@ def build() -> None:
         const jumpPills = document.getElementById("jumpPills");
         const btnAutoFrames = document.getElementById("btnAutoFrames");
         slider.max = String(frames.length - 1);
-        let currentFrameIdx = 5;
+        let currentFrameIdx = 6;
         let autoTimer = null;
 
         function selectFrame(idx) {{
@@ -603,10 +642,10 @@ def build() -> None:
             btnAutoFrames.classList.add("active");
             autoTimer = setInterval(() => {{
               selectFrame((currentFrameIdx + 1) % frames.length);
-            }}, 420);
+            }}, 380);
           }}
         }});
-        selectFrame(5);
+        selectFrame(6); // f038 Meteor Descent
 
         // Lightbox
         const lightbox = document.getElementById("lightbox");
@@ -630,35 +669,46 @@ def build() -> None:
         }}, null, 2);
         document.getElementById("sceneJsonPre").textContent = JSON.stringify(data.read_scene, null, 2);
 
-        // Textures
-        const texGrid = document.getElementById("texGrid");
-        const previewBoxes = [];
-        data.textures.forEach(t => {{
-          const card = document.createElement("div");
-          card.className = "tex-card";
-          const box = document.createElement("div");
-          box.className = "tex-preview";
-          const img = document.createElement("img");
-          img.src = t.dataUri;
-          img.alt = t.name;
-          img.style.cursor = "zoom-in";
-          img.addEventListener("click", () => openLightbox(t.dataUri));
-          box.appendChild(img);
-          previewBoxes.push(box);
+        function renderAssetGrid(items, containerId, defaultChecker) {{
+          const grid = document.getElementById(containerId);
+          const boxes = [];
+          items.forEach(item => {{
+            const card = document.createElement("div");
+            card.className = "tex-card";
+            const box = document.createElement("div");
+            box.className = "tex-preview" + (defaultChecker ? " checker" : "");
+            const img = document.createElement("img");
+            img.src = item.dataUri;
+            img.alt = item.name;
+            img.style.cursor = "zoom-in";
+            img.addEventListener("click", () => openLightbox(item.dataUri));
+            box.appendChild(img);
+            boxes.push(box);
 
-          const nm = document.createElement("div"); nm.className = "tex-name"; nm.textContent = t.name;
-          const desc = document.createElement("div"); desc.style.fontSize = "12.5px"; desc.textContent = t.desc;
-          const meta = document.createElement("div"); meta.className = "tex-meta";
-          meta.textContent = `${{t.width}}×${{t.height}} · ${{t.mode}} · ${{(t.bytes / 1024).toFixed(1)}} KB`;
-          card.append(box, nm, desc, meta);
-          texGrid.appendChild(card);
+            const nm = document.createElement("div"); nm.className = "tex-name"; nm.textContent = item.name;
+            const desc = document.createElement("div"); desc.style.fontSize = "12.5px"; desc.textContent = item.desc;
+            const meta = document.createElement("div"); meta.className = "tex-meta";
+            meta.textContent = `${{item.width}}×${{item.height}} · ${{item.mode}} · ${{(item.bytes / 1024).toFixed(1)}} KB`;
+            card.append(box, nm, desc, meta);
+            grid.appendChild(card);
+          }});
+          return boxes;
+        }}
+
+        const spriteBoxes = renderAssetGrid(data.customSprites, "spriteGrid", true);
+        let spriteCheckerOn = true;
+        document.getElementById("btnToggleSpriteChecker").addEventListener("click", (e) => {{
+          spriteCheckerOn = !spriteCheckerOn;
+          e.target.classList.toggle("active", spriteCheckerOn);
+          spriteBoxes.forEach(b => b.classList.toggle("checker", spriteCheckerOn));
         }});
 
+        const texBoxes = renderAssetGrid(data.textures, "texGrid", false);
         let checkerOn = false;
         document.getElementById("btnToggleChecker").addEventListener("click", (e) => {{
           checkerOn = !checkerOn;
           e.target.classList.toggle("active", checkerOn);
-          previewBoxes.forEach(b => b.classList.toggle("checker", checkerOn));
+          texBoxes.forEach(b => b.classList.toggle("checker", checkerOn));
         }});
 
         // Source code viewer

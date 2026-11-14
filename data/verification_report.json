@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-14T15:56:40+09:00",
+  "generated_at": "2026-11-14T16:29:15+09:00",
   "environment": {
     "godot_version": "4.7.2.stable.official.ed1daf0bf",
     "renderer": "Vulkan 1.4.335 - Forward+ - llvmpipe (LLVM 21.1.8, 256 bits)",
@@ -9,16 +9,17 @@
     "mcp_server": "godot (@tugcantopaloglu/godot-mcp v3.1.0, 157 lazy tools)"
   },
   "render_verify": {
-    "command": "render_verify.sh godot_project render_out 60 30",
-    "frames_captured": 60,
-    "duration_sec": 2.0,
-    "wall_time_sec": 3,
-    "cpu_render_sec": 0.04,
-    "cpu_avg_ms_per_frame": 0.60,
-    "gpu_render_sec": 1.82,
-    "gpu_avg_ms_per_frame": 30.42,
-    "encoding_sec": 0.49,
-    "encoding_avg_ms_per_frame": 8.18
+    "command": "render_verify.sh godot_project meteor_render 90 30",
+    "scene": "res://scenes/meteor_showcase.tscn",
+    "frames_captured": 90,
+    "duration_sec": 3.0,
+    "wall_time_sec": 5,
+    "cpu_render_sec": 0.03,
+    "cpu_avg_ms_per_frame": 0.29,
+    "gpu_render_sec": 2.84,
+    "gpu_avg_ms_per_frame": 31.51,
+    "encoding_sec": 1.13,
+    "encoding_avg_ms_per_frame": 12.51
   },
   "mcp_project_info": {
     "name": "Godot4StudioShowcase",
@@ -26,18 +27,25 @@
     "godotVersion": "4.7.2.stable.official.ed1daf0bf",
     "isDotnet": false,
     "structure": {
-      "scenes": 1,
-      "scripts": 4,
-      "assets": 8,
-      "other": 23
+      "scenes": 2,
+      "scripts": 5,
+      "assets": 13,
+      "other": 29
     }
   },
   "mcp_validate_scripts": {
     "scope": "all",
-    "fileCount": 4,
+    "fileCount": 5,
     "filesWithErrors": 0,
     "allValid": true,
     "results": [
+      {
+        "scriptPath": "scenes/meteor_showcase.gd",
+        "checked": true,
+        "valid": true,
+        "errorCount": 0,
+        "errors": []
+      },
       {
         "scriptPath": "scenes/vfx_showcase.gd",
         "checked": true,
