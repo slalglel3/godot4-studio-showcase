@@ -36,18 +36,17 @@ def build() -> None:
     read_scene = json.load(open(f"{REPO}/data/read_scene.json", encoding="utf-8"))
 
     source_files = [
-        ("meteor_showcase.gd", "godot_project/scenes/meteor_showcase.gd", "gdscript", "2.5D Skeleton3D 메테오 소환 · 지팡이 소켓 추적 · 보스 피격 & 대검 반격 타임라인"),
-        ("meteor_showcase.tscn", "godot_project/scenes/meteor_showcase.tscn", "scene", "SubViewport 3D 리깅 액터 + 2D HDR 아레나 + 메테오 CPUParticles2D 씬"),
-        ("rigged_actor_3d.gd", "godot_project/shared/scripts/rigged_actor_3d.gd", "gdscript", "Skeleton3D / AnimationPlayer 클립 재생 · 툰 아웃라인 · 본 소켓 추적 컨트롤러"),
-        ("subviewport_stage_bridge.gd", "godot_project/shared/scripts/subviewport_stage_bridge.gd", "gdscript", "투명 SubViewport 3D 액터 스테이지 & 3D→2D 좌표 언프로젝션 브릿지"),
-        ("toon_cel_outline.gdshader", "godot_project/shared/shaders/toon_cel_outline.gdshader", "shader", "3단 계조 툰 셰이딩 + 프레넬 림라이트 + 히트 플래시 Spatial 셰이더"),
-        ("toon_outline_nextpass.gdshader", "godot_project/shared/shaders/toon_outline_nextpass.gdshader", "shader", "모델 스케일 보정 역법선 3D 잉크 아웃라인 Next-Pass 셰이더"),
+        ("meteor_showcase.gd", "godot_project/scenes/meteor_showcase.gd", "gdscript", "2D Skeleton2D 메테오 소환 · 지팡이 소켓 추적 · 2-Bone IK 대검 반격 타임라인"),
+        ("meteor_showcase.tscn", "godot_project/scenes/meteor_showcase.tscn", "scene", "원본 일러스트 기반 CanvasGroup Skeleton2D + 2.5D HDR 아레나 + 메테오 CPUParticles2D 씬"),
+        ("rigged_actor_2d.gd", "godot_project/shared/scripts/rigged_actor_2d.gd", "gdscript", "Skeleton2D / Bone2D / Soft-Skinned Polygon2D 레이어 리거 (강체 마스크 & 뼈 소켓 지원)"),
+        ("vfx_canvasgroup_hit_flash.gdshader", "godot_project/shared/shaders/vfx_canvasgroup_hit_flash.gdshader", "shader", "CanvasGroup 전체 실루엣 통합 외곽선 글로우 + 피격 황금빛 Hit-Flash 셰이더"),
+        ("extract_rig_parts.py", "scripts/extract_rig_parts.py", "python", "OpenCV TELEA 인페인팅 + scipy EDT 기반 원본 일러스트 10개 관절 파츠 무결점 분리"),
         ("vfx_director.gd", "godot_project/shared/scripts/vfx_director.gd", "gdscript", "감쇠 트라우마 셰이크, 충격파 레이어 분리, 겹침 방지 컷인 큐"),
         ("boss_dual_gauge.gd", "godot_project/shared/scripts/boss_dual_gauge.gd", "gdscript", "보스 HP(주황) + 잔상 트레일(아이보리) + 브레이크 게이지(화이트)"),
         ("squad_skill_runner.gd", "godot_project/shared/scripts/squad_skill_runner.gd", "gdscript", "스쿼드 쿨타임·브레이크 사이클 자동 스케줄러"),
         ("vfx_shockwave.gdshader", "godot_project/shared/shaders/vfx_shockwave.gdshader", "shader", "hint_screen_texture 기반 방사형 왜곡 + 색수차 충격파 셰이더"),
         ("vfx_additive_scroll.gdshader", "godot_project/shared/shaders/vfx_additive_scroll.gdshader", "shader", "HDR Emissive Bloom + UV 스크롤 가산 혼합 불꽃/마법진/꼬리"),
-        ("vfx_hit_flash.gdshader", "godot_project/shared/shaders/vfx_hit_flash.gdshader", "shader", "2D 캐릭터 림 아웃라인 + 피격 백색/황금 플래시 셰이더"),
+        ("vfx_hit_flash.gdshader", "godot_project/shared/shaders/vfx_hit_flash.gdshader", "shader", "단일 스프라이트 림 아웃라인 + 피격 백색 플래시 셰이더"),
         ("vfx_dissolve_curse.gdshader", "godot_project/shared/shaders/vfx_dissolve_curse.gdshader", "shader", "노이즈 디졸브 + 글리치 + 보라색 저주 오라 셰이더"),
         ("ui_cutin_banner.gdshader", "godot_project/shared/shaders/ui_cutin_banner.gdshader", "shader", "사선 클리핑 평행사변형 스킬 컷인 배너 셰이더"),
         ("vfx_showcase.gd", "godot_project/scenes/vfx_showcase.gd", "gdscript", "베이스라인 셰이더/컷인 테스트 씬 스크립트"),
@@ -65,8 +64,9 @@ def build() -> None:
             })
 
     custom_asset_specs = [
-        ("mage_cast_sheet.png", "godot_project/assets/sprites/mage_cast_sheet.png", True, "홍염 대마법사 Skeleton3D Cast_Meteor_Heavy 6프레임 시트 (Blender 베이크)"),
-        ("boss_attack_sheet.png", "godot_project/assets/sprites/boss_attack_sheet.png", True, "보스 카르돈 Skeleton3D Sword_Attack 6프레임 시트 (Blender 베이크)"),
+        ("mage_caster.png", "godot_project/assets/sprites/mage_caster.png", True, "홍염 대마법사 원본 일러스트 보존 (v1.1.0 캐릭터 원형, 764×829)"),
+        ("boss_kardon.png", "godot_project/assets/sprites/boss_kardon.png", True, "저무는 카르돈 원본 일러스트 보존 (v1.1.0 보스 원형, 1024×891)"),
+        ("rigged_parts_sheet.png", "godot_project/assets/sprites/rigged_parts_sheet.png", False, "원본 일러스트 분할 Skeleton2D 리깅 파츠 시트 (마법사 4레이어 + 카르돈 6레이어)"),
         ("mage_cutin.png", "godot_project/assets/sprites/mage_cutin.png", False, "스킬 컷인 배너 일러스트 ('멸망의 메테오!!')"),
         ("meteor_rock.png", "godot_project/assets/sprites/meteor_rock.png", True, "용암 균열 화산 운석 본체 (clean_cutout.py)"),
         ("arena_bg.png", "godot_project/assets/textures/arena_bg.png", False, "고딕 흑요석 결투장 2.5D 배경 (1280×720)"),
@@ -115,21 +115,21 @@ def build() -> None:
         })
 
     frames_meta = [
-        ("f_0001.png", 1, 0.00, "0.00s — 3D Skeleton3D 대치 개시: 홍염 마법사(Spell_Enter) vs 심연 대검 보스 카르돈(Sword_Idle)"),
-        ("f_0007.png", 7, 0.20, "0.20s — 지팡이 거상 + StaffTip 뼈 소켓 추종 마력 오브 점화 + 2.5D 성좌 마법진 전개"),
-        ("f_0014.png", 14, 0.43, "0.43s — 상체 비틀기 Cast_Meteor_Heavy 영창 돌입 + 상공 소환 포탈(Sky Rift) 개방"),
-        ("f_0018.png", 18, 0.57, "0.57s — '멸망의 메테오!!' 컷인 고정 + 마법사 왼팔 전개 & 보스 발밑 타겟 링 가속"),
-        ("f_0028.png", 28, 0.90, "0.90s — 양팔·척추 아크 최대 개방(Windup) + 포탈에서 거대 용암 운석 출현 시작"),
-        ("f_0036.png", 36, 1.17, "1.17s — 관절 연동 영창 정점 + 혜성 화염 꼬리·스파크 42입자 대각선 낙하 가속"),
-        ("f_0042.png", 42, 1.37, "1.37s — 운석 보스 두상 직상방 강하 + 마법사 지팡이 내리찍기(Slam) 전환"),
-        ("f_0046.png", 46, 1.50, "1.50s — 타격 80ms 직전: 지팡이 하향 꽂기 팔로우 스루 & 운석 임계 접근"),
-        ("f_0049.png", 49, 1.60, "1.60s — 메테오 직격! 보스 3D 백색 Hit-Flash + Hit_Chest 피격 경직 + 색수차 스크린 충격파"),
+        ("f_0001.png", 1, 0.00, "0.00s — v1.1.0 원본 캐릭터 2D Skeleton2D 리깅 대기: 홍염 대마법사 vs 심연 대검 보스 카르돈"),
+        ("f_0007.png", 7, 0.20, "0.20s — 마법사 무릎 굽힘(Squat) + 오른팔 강체 지팡이 거상 + StaffTip 소켓 마력 오브 점화"),
+        ("f_0014.png", 14, 0.43, "0.43s — 상체 척추 후경(Arch) + 고개 상향 + 상공 소환 포탈(Sky Rift) 개방 및 보스 가드 개시"),
+        ("f_0020.png", 20, 0.63, "0.63s — '멸망의 메테오!!' 컷인 배너 + 왼팔 소매 플레어 전개 + 마법진 가속 회전"),
+        ("f_0028.png", 28, 0.90, "0.90s — 지팡이 하늘 최고점 정점 + 카르돈 양손 2-Bone IK 대검 방어 거상 + 운석 출현"),
+        ("f_0036.png", 36, 1.17, "1.17s — 마법사 지팡이 하향 추스트(Thrust) 개시 + 혜성 화염 꼬리·스파크 42입자 대각선 강하"),
+        ("f_0042.png", 42, 1.37, "1.37s — 운석 보스 두상 직상방 강하 + 마법사 전신 전방 런지 & 지팡이 지시 타격 자세"),
+        ("f_0046.png", 46, 1.50, "1.50s — 타격 직전: 마법사 코트 자락 바람 펄럭임 & 카르돈 타겟 링 최대 수축"),
+        ("f_0049.png", 49, 1.60, "1.60s — 메테오 직격! CanvasGroup 전신 통합 황금빛 Hit-Flash + 보스 후방 경직 & 망토 폭발 휘날림"),
         ("f_0052.png", 52, 1.70, "1.70s — 2차 충격파 확산 + 용암 폭발 기둥·돔 팽창 + 56개 방사형 스파크 분출"),
-        ("f_0056.png", 56, 1.83, "1.83s — 마법사 무릎 굽힘 피니시 리코일 & 보스 게이지(-4,350 HP / -520 Break) 아이보리 잔상"),
-        ("f_0064.png", 64, 2.10, "2.10s — 폭발 소강·용암 크레이터 잔광 + 보스 피격 경직에서 반격 태세 전환"),
-        ("f_0072.png", 72, 2.37, "2.37s — 보스 카르돈 반격 돌진 개시: 상체 전경 & 심연의 대검 후방 회전"),
-        ("f_0082.png", 82, 2.70, "2.70s — 보스 Sword_Attack 풀 런지: 무릎 깊게 굽히며 보라색 발광 대검 하단 횡베기"),
-        ("f_0090.png", 90, 2.97, "2.97s — 마법사 전투 대기 복귀 vs 보스 대검 횡베기 피니시 (90프레임 3.00s 무결점 완료)"),
+        ("f_0056.png", 56, 1.83, "1.83s — 마법사 폭풍 반동 리코일 + 카르돈 격노 반격 자세 전환 & 게이지(-4,350 HP) 트레일"),
+        ("f_0064.png", 64, 2.10, "2.10s — 카르돈 격노 와인드업: 상체 들썩임과 함께 양손 IK 대검 수평 상단 인양"),
+        ("f_0074.png", 74, 2.43, "2.43s — 보스 대검 수평 고점 완료 → 전방 강타 내려찍기(Counter-Slam) 전환 개시"),
+        ("f_0082.png", 82, 2.70, "2.70s — 보스 전신 전방 런지(Chest -15°, Pelvis X -24px) & 대검 전방 강타 팔로우 스루"),
+        ("f_0090.png", 90, 2.97, "2.97s — 양측 전투 대기 자세 부드러운 루프 복귀 (90프레임 3.00s 무결점 완료)"),
     ]
     frames = []
     for fn, num, sec, caption in frames_meta:
@@ -165,7 +165,7 @@ def build() -> None:
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Godot 4 Game Studio — 3D Rigged Meteor Combat Showcase (v1.2.0)</title>
+  <title>Godot 4 Game Studio — 2D Skeleton2D Articulated Meteor Combat (v1.3.0)</title>
   <style>
     :root {{
       --bg: #0a0c12;
@@ -340,17 +340,17 @@ def build() -> None:
     <div id="fatalError" class="error-banner hidden"></div>
 
     <header class="hero">
-      <div class="eyebrow">Godot 4 Game Studio · 3D Rigged Meteor Combat Showcase (v1.2.0)</div>
-      <h1>3D 관절 리깅 홍염 대마법사 vs 심연의 카르돈 — '멸망의 메테오!!' 실전 전투</h1>
+      <div class="eyebrow">Godot 4 Game Studio · 2D Skeleton2D Articulated Meteor Showcase (v1.3.0)</div>
+      <h1>원본 일러스트 기반 Skeleton2D 홍염 대마법사 vs 카르돈 — '멸망의 메테오!!' 실전 전투</h1>
       <p class="subtitle">
-        <strong>Blender 4.5.16 LTS + CC0 모션 리타게팅(<code class="inline">retarget_ual.py</code>)</strong>으로 구축한 <code class="inline">scarlet_mage.glb</code>·<code class="inline">boss_kardon.glb</code>(<code class="inline">Skeleton3D</code> 53본)을 Godot 4.7.2 <code class="inline">SubViewportStageBridge</code>로 2.5D HDR 결투장에 통합해 팔다리 관절 움직임, <code class="inline">StaffTip</code> 소켓 마력 오브 추적, 메테오 직격 피격(<code class="inline">Hit_Chest</code>) 및 보스 대검 반격(<code class="inline">Sword_Attack</code>)까지 렌더링 검증한 <strong>모바일/오프라인 단일 파일</strong> 리포트입니다.
+        <strong>v1.1.0 원본 2D 캐릭터 일러스트(<code class="inline">mage_caster.png</code> · <code class="inline">boss_kardon.png</code>)</strong>를 OpenCV TELEA 인페인팅과 <code class="inline">scipy</code> EDT로 무결점 10개 파츠로 분리한 뒤, Godot 4 네이티브 <code class="inline">Skeleton2D</code> + 소프트 스킨 <code class="inline">Polygon2D</code> + <code class="inline">CanvasGroup</code> 통합 아웃라인·피격 플래시 + 2-Bone IK(<code class="inline">RiggedActor2D</code>)로 팔다리·지팡이·대검·망토 관절 모션을 부여해 검증한 <strong>모바일/오프라인 단일 파일</strong> 리포트입니다.
       </p>
       <div class="badge-row" id="heroBadges"></div>
       <nav class="nav-pills">
-        <a href="#sec-render">1. 3D 리깅 메테오 영상</a>
+        <a href="#sec-render">1. 2D 리깅 메테오 영상</a>
         <a href="#sec-sheet">2. 6-Frame QA 시트</a>
-        <a href="#sec-sprites">3. 3D 리깅 시트 · 에셋 (5종)</a>
-        <a href="#sec-mcp">4. Blender · MCP 검증 결과</a>
+        <a href="#sec-sprites">3. 원본 일러 · 파츠 시트 (6종)</a>
+        <a href="#sec-mcp">4. 2D 리깅 · MCP 검증 결과</a>
         <a href="#sec-textures">5. 절차적 VFX 텍스처 (8종)</a>
         <a href="#sec-code">6. 셰이더 &amp; GDScript 소스</a>
       </nav>
@@ -362,8 +362,8 @@ def build() -> None:
 
     <section id="sec-render">
       <div class="section-head">
-        <h2>1. 3D 관절 리깅 전투 &amp; 메테오 낙하 렌더 영상 + 프레임 스크러버</h2>
-        <p class="section-desc">3.00초(90프레임 @ 30fps, 1280×720, Vulkan 1.4.335 llvmpipe Forward+ + SubViewport MSAA 4x)</p>
+        <h2>1. 원본 일러 2D 관절 리깅 전투 &amp; 메테오 낙하 렌더 영상 + 프레임 스크러버</h2>
+        <p class="section-desc">3.00초(90프레임 @ 30fps, 1280×720, Vulkan 1.4.335 llvmpipe Forward+)</p>
       </div>
       <div class="media-grid">
         <div class="card">
@@ -383,7 +383,7 @@ def build() -> None:
             <span class="tex-meta" id="videoTimeLabel">0.00s / 3.00s</span>
           </div>
           <p class="tex-meta" style="margin: 10px 0 0;">
-            ※ <strong>전투 타임라인</strong>: 0.00s <code class="inline">Spell_Simple_Enter</code> 지팡이 거상 → 0.45s <code class="inline">Cast_Meteor_Heavy</code> 상체 비틀기 &amp; 아이 컷인 → 0.92s 용암 운석 강하 → 1.58s 직격(<code class="inline">Hit_Chest</code> 백색 플래시 + 색수차 충격파 + -4,350 HP) → 2.18s 보스 <code class="inline">Sword_Attack</code> 대검 반격 런지.
+            ※ <strong>관절 모션 타임라인</strong>: 0.00s 무릎 스쿼트 &amp; 지팡이 거상 → 0.42s 아이 컷인 &amp; 소환 포탈 개방 → 0.94s 지팡이 하향 추스트 → 1.56s 운석 직격(<code class="inline">CanvasGroup</code> 전신 Hit-Flash + 충격파 + -4,350 HP) → 2.00~2.85s 카르돈 2-Bone IK 양손 대검 반격 내려찍기.
           </p>
         </div>
 
@@ -399,7 +399,7 @@ def build() -> None:
             </div>
             <div class="toolbar" style="margin-top: 8px;">
               <button class="btn" id="btnAutoFrames" type="button">▶ 키프레임 슬라이드 재생</button>
-              <span class="tex-meta">슬라이더/버튼으로 3D 포즈·지팡이 소켓·충격파 정밀 검수</span>
+              <span class="tex-meta">슬라이더/버튼으로 2D 관절·지팡이 소켓·2-Bone IK 반격 정밀 검수</span>
             </div>
             <div class="jump-pills" id="jumpPills"></div>
           </div>
@@ -419,7 +419,7 @@ def build() -> None:
 
     <section id="sec-sprites">
       <div class="section-head">
-        <h2>3. 3D 리깅 스프라이트 시트 · 컷인 · 운석 · 배경 에셋 (5종)</h2>
+        <h2>3. 원본 일러스트 · Skeleton2D 분할 시트 · 컷인 · 운석 · 배경 에셋 (6종)</h2>
         <div><button class="btn" id="btnToggleSpriteChecker" type="button">체커보드 투명 배경 토글</button></div>
       </div>
       <div class="tex-grid" id="spriteGrid"></div>
@@ -427,8 +427,8 @@ def build() -> None:
 
     <section id="sec-mcp">
       <div class="section-head">
-        <h2>4. Blender 3D 리타게팅 · MCP 정적 검증 · MovieMaker 텔레메트리</h2>
-        <p class="section-desc">2.5D Skeleton3D 전투 통합 후 재실행한 최종 검증 데이터</p>
+        <h2>4. Skeleton2D 리깅 · MCP 정적 검증 · MovieMaker 텔레메트리</h2>
+        <p class="section-desc">v1.1.0 원본 일러 2D 관절 리깅 통합 후 재실행한 최종 검증 데이터</p>
       </div>
       <div class="card">
         <div class="table-wrap">
@@ -443,28 +443,28 @@ def build() -> None:
             </thead>
             <tbody>
               <tr>
-                <td><strong>1. Blender 4.5.16 + CC0 리깅</strong></td>
-                <td><code class="inline">blender-xvfb-run</code> + <code class="inline">retarget_ual.py</code></td>
-                <td><span style="color:var(--green);font-weight:700;">PASS</span> · 2종 <code class="inline">.glb</code> + 2종 6f 시트</td>
-                <td><code class="inline">scarlet_mage.glb</code>(1.1MB, 6클립) &amp; <code class="inline">boss_kardon.glb</code>(1.5MB, 6클립) + <code class="inline">StaffTip</code>/<code class="inline">BladeTip</code> 본 소켓 내장</td>
+                <td><strong>1. 원본 일러 파츠 분리 &amp; 인페인팅</strong></td>
+                <td><code class="inline">scripts/extract_rig_parts.py</code></td>
+                <td><span style="color:var(--green);font-weight:700;">PASS</span> · 10개 무결점 RGBA 파츠</td>
+                <td>마법사 4레이어 + 카르돈 6레이어 분리, OpenCV TELEA + 내부 시드 침식으로 백색 테두리/잔존 스태프 제거</td>
               </tr>
               <tr>
                 <td><strong>2. Godot MCP 정적/타입 검증</strong></td>
                 <td><code class="inline">godot:validate_scripts (scope="all")</code></td>
-                <td><span style="color:var(--green);font-weight:700;">PASS</span> · 7/7 files (<code class="inline">filesWithErrors: 0</code>)</td>
-                <td>신규 <code class="inline">RiggedActor3D</code>·<code class="inline">SubViewportStageBridge</code> 포함 전체 7개 GDScript 파싱/타입 오류 0건</td>
+                <td><span style="color:var(--green);font-weight:700;">PASS</span> · 6/6 files (<code class="inline">filesWithErrors: 0</code>)</td>
+                <td><code class="inline">RiggedActor2D</code>·<code class="inline">meteor_showcase.gd</code> 포함 전체 6개 GDScript 파싱/타입 오류 0건</td>
               </tr>
               <tr>
-                <td><strong>3. 3D→2D 좌표 동기화 &amp; 툰 셰이더</strong></td>
+                <td><strong>3. 2D 뼈·메시 스키닝 &amp; CanvasGroup</strong></td>
                 <td><code class="inline">godot:read_scene("scenes/meteor_showcase.tscn")</code></td>
                 <td><span style="color:var(--green);font-weight:700;">PASS</span> · <code class="inline">MeteorShowcase</code></td>
-                <td>100x GLB 스케일 보정 3D 아웃라인(<code class="inline">toon_outline_nextpass</code>), 발밑 언프로젝션 마법진, <code class="inline">StaffTip</code> 오브 추적 정상</td>
+                <td>지팡이 강체 가중치 마스크, <code class="inline">StaffTip</code> 오브 추적, 카르돈 왼팔 2-Bone IK 그립, 전신 통합 Hit-Flash</td>
               </tr>
               <tr>
                 <td><strong>4. MovieMaker 90프레임 렌더링</strong></td>
                 <td><code class="inline">render_verify.sh ... 90 30</code> (<code class="inline">godot-xvfb-run</code>)</td>
-                <td><span style="color:var(--green);font-weight:700;">PASS</span> · 90 frames in 11s (CPU 1.68ms / GPU 31.52ms)</td>
-                <td><code class="inline">f036</code> 시전·낙하, <code class="inline">f049</code> 백색 Hit-Flash·충격파·HP 차감, <code class="inline">f082</code> 보스 <code class="inline">Sword_Attack</code> 반격 육안 검증</td>
+                <td><span style="color:var(--green);font-weight:700;">PASS</span> · 90 frames in 7s (CPU 0.43ms / GPU 46.03ms)</td>
+                <td>원본 일러 100% 보존 + 스쿼트·지팡이 스윙·피격 넉백·대검 반격·망토 펄럭임 시각 QA 통과</td>
               </tr>
             </tbody>
           </table>
@@ -490,8 +490,8 @@ def build() -> None:
 
     <section id="sec-code">
       <div class="section-head">
-        <h2>6. 검증된 Godot 4 셰이더 &amp; GDScript 소스 코드</h2>
-        <p class="section-desc">2.5D 리깅 컨트롤러 · 3D 툰 셰이더 · 메테오 연출 씬 전체 16개 파일</p>
+        <h2>6. 검증된 Godot 4 셰이더 · 리거 · 파츠 추출 소스 코드</h2>
+        <p class="section-desc">2D Skeleton2D 리거 · CanvasGroup Hit-Flash 셰이더 · 메테오 전투 씬 전체 15개 파일</p>
       </div>
       <div class="card">
         <div class="tabs" id="sourceTabs"></div>
@@ -507,7 +507,7 @@ def build() -> None:
 
     <footer>
       <div>Repository: <a href="https://github.com/slalglel3/godot4-studio-showcase" target="_blank" rel="noopener">github.com/slalglel3/godot4-studio-showcase</a></div>
-      <div>Release v1.2.0 · Blender 4.5.16 LTS + Godot 4.7.2-stable · godot-mcp v3.1.0 · Xvfb + Vulkan llvmpipe</div>
+      <div>Release v1.3.0 · Godot 4.7.2-stable (Skeleton2D + Polygon2D + CanvasGroup) · godot-mcp v3.1.0 · Xvfb + Vulkan llvmpipe</div>
     </footer>
   </div>
 
@@ -528,8 +528,8 @@ def build() -> None:
         const val = rep.mcp_validate_scripts;
 
         const badges = [
-          {{ text: "v1.2.0 3D Rigged Combat Standalone HTML", cls: "gold" }},
-          {{ text: "Blender 4.5.16 LTS + Godot " + env.godot_version, cls: "cyan" }},
+          {{ text: "v1.3.0 2D Skeleton2D Standalone HTML", cls: "gold" }},
+          {{ text: "Godot " + env.godot_version + " (Skeleton2D)", cls: "cyan" }},
           {{ text: env.renderer, cls: "cyan" }},
           {{ text: env.mcp_server, cls: "" }},
           {{ text: `GDScript ${{val.fileCount}}/${{val.fileCount}} Valid (0 Errors)`, cls: "" }},
@@ -547,10 +547,10 @@ def build() -> None:
         }});
 
         const kpis = [
-          {{ label: "3D Rigged Combat", value: "Skeleton3D + 멸망의 메테오!!", cls: "gold", sub: "53본 UAL 리타게팅 · 마법사 시전 ↔ 보스 대검 반격" }},
+          {{ label: "2D Skeletal Motion", value: "Skeleton2D + 원본 캐릭터 보존", cls: "gold", sub: "v1.1.0 일러 10개 파츠 리깅 · 2-Bone IK 양손 대검 반격" }},
           {{ label: "MCP Static Check", value: `${{val.fileCount}} / ${{val.fileCount}} PASS`, cls: "ok", sub: `Errors: ${{val.filesWithErrors}} (godot:validate_scripts)` }},
           {{ label: "MovieMaker Render", value: `${{rv.frames_captured}}f (${{rv.duration_sec.toFixed(1)}}s) in ${{rv.wall_time_sec}}s`, cls: "cyan", sub: `CPU ${{rv.cpu_avg_ms_per_frame.toFixed(2)}}ms · GPU ${{rv.gpu_avg_ms_per_frame.toFixed(2)}}ms / frame` }},
-          {{ label: "3D + VFX Pipeline", value: `${{data.customSprites.length}} Assets / ${{data.textures.length}} VFX`, cls: "", sub: "2 GLB Rigs · 7 Shaders · SubViewport 2.5D Bridge" }}
+          {{ label: "Assets & Shaders", value: `${{data.customSprites.length}} Assets / ${{data.textures.length}} VFX`, cls: "", sub: "2 CanvasGroup Rigs · 6 Shaders · OpenCV TELEA Split" }}
         ];
         const kpiGrid = document.getElementById("kpiGrid");
         kpis.forEach(k => {{
